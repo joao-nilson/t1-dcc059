@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <map>
+#include <functional>
 
 using namespace std;
 
@@ -639,11 +640,76 @@ Grafo* Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
     return agm;
 }
 
-
-Grafo *Grafo::arvore_caminhamento_profundidade(char id_no)
-{
-    cout << "Metodo nao implementado" << endl;
+No* Grafo::getBuscaNo(char id) {
+    for (No* no : this->lista_adj) {
+        if (no->get_id() == id) {
+            return no;
+        }
+    }
     return nullptr;
+}
+
+Grafo* Grafo::arvore_caminhamento_profundidade(char id_no) 
+{
+ if (getBuscaNo(id_no) == nullptr)
+    {
+        cout << "Erro: O nó " << id_no << " nao existe no grafo." << endl;
+        return nullptr;
+    }
+
+    Grafo* arvore_resultante = new Grafo();
+    arvore_resultante->in_direcionado = this->in_direcionado;
+    arvore_resultante->in_ponderado_aresta = this->in_ponderado_aresta;
+    arvore_resultante->in_ponderado_vertice = this->in_ponderado_vertice;
+
+    map<char, int> cor;
+    for (No* no : this->lista_adj)
+    {
+        cor[no->get_id()] = 0;
+    }
+    map<char, No*> nos_arvore;
+
+    cout << "Busca em profundidade a partir de " << id_no << "." << endl << "Arestas de retorno:" << endl;
+
+    function<void(char)> dfs_visit;
+    dfs_visit = [&](char id)
+    {
+        cor[id] = 1;
+
+        No* u_no_original = this->getBuscaNo(id);
+        if (!u_no_original) return;
+
+        if (nos_arvore.find(id) == nos_arvore.end())
+        {
+            No* no_novo = new No(id);
+            arvore_resultante->adiciona_no(no_novo);
+            nos_arvore[id] = no_novo;
+        }
+        No* no_arvore = nos_arvore[id];
+
+        for (Aresta* aresta : u_no_original->get_arestas())
+        {
+            char v_id = aresta->id_no_alvo;
+
+            if (cor.count(v_id) && cor[v_id] == 0)
+            {
+                int peso = get_ponderado_aresta() ? aresta->peso : 1;
+                no_arvore->add_aresta(v_id, peso);
+                dfs_visit(v_id);
+            }
+            else if (cor.count(v_id) && cor[v_id] == 1)
+            {
+                cout << "Aresta de retorno: " << id << " -> " << v_id << endl;
+            }
+        }
+        cor[id] = 2;
+    };
+
+    dfs_visit(id_no);
+
+    arvore_resultante->set_ordem(arvore_resultante->get_lista_adj().size());
+
+    return arvore_resultante;
 }
 unordered_map<char, int> Grafo::dijkstra_distancia(char id_no) {
     unordered_map<char, int> dist;

@@ -26,9 +26,9 @@ class No {
         void set_peso(int novo_peso) {peso = novo_peso;};
         void add_vizinho(No* viz) { vizinhos.push_back(viz); }
         void add_aresta(char id_dest, int peso) { arestas.push_back(new Aresta(id_dest, peso)); }
+        char id;
 
     private:
-        char id;
         int peso;
         vector<Aresta*> arestas;
         vector<No*> vizinhos;
