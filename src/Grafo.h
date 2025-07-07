@@ -8,8 +8,9 @@
 #include "No.h"
 #include <iostream>
 #include <set>
+#include <stack>
 #include <vector>
-
+#include <unordered_map>
 
 using namespace std;
 class Grafo {
@@ -20,6 +21,7 @@ public:
     ~Grafo();
 
     void carregaArquivo(const string& grafo);
+
     void aux_dfs(No* no, set<char>& visitado);
     vector<char> fecho_transitivo_direto(char id_no); // a
     vector<char> fecho_transitivo_indireto(char id_no); // b
@@ -28,13 +30,31 @@ public:
 
     Grafo* arvore_geradora_minima_prim(vector<char> ids_nos); // e
     Grafo* arvore_geradora_minima_kruskal(vector<char> ids_nos); // f
+
     Grafo* arvore_caminhamento_profundidade(char id_no); // g
+    vector<int> computeEccentricities();
+    No* get_no_by_id(char id) {
+        for (No* no : lista_adj) {
+            if (no->get_id() == id) {
+                return no;
+            }
+        }
+        return nullptr;
+    }
+    unordered_map<char, int> dijkstra_distancia(char id_no);
     int raio(); // h 1
     int diametro(); // h 2
     vector<char> centro(); // h 3
     vector<char> periferia(); // h 4
+    void fillOrder(char v, set<char>& visited, stack<char>& Stack);
+    void DFSUtil(char v, set<char>& visited);
+    Grafo* getTranspose();
+    vector<char> directed_articulation_points();
+    void remove_vertex(char v);
+    int countSCC();
     vector<char> vertices_de_articulacao(); // i
 
+    void adiciona_no(No* no) { lista_adj.push_back(no); };
     void imprimeInfo() const;
 
     //getters
@@ -61,6 +81,10 @@ private:
     bool in_ponderado_aresta;
     bool in_ponderado_vertice;
     vector<No*> lista_adj;
+    private:
+    //funcao auxiliar para DFS
+    void aux_dfs_reverso(char id_atual, set<char>& visitado, const unordered_map<char, vector<No*>>& lista_adjacencia_inversa);
+
 };
 
 

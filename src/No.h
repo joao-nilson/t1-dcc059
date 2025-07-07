@@ -13,12 +13,14 @@ class No {
         No(char id) : id(id){} //vertice não ponderado
         ~No() {
         for (Aresta* a : arestas) delete a;
+        vector<Aresta*> arestas;        
     }
         // Getters
         char get_id() const {return id;};
         int get_peso() const {return peso;};
         vector<Aresta*> get_arestas() const {return arestas;};
         vector<No*> get_vizinhos() const {return vizinhos;};
+        vector<Aresta*>& get_arestas() { return arestas; } 
 
         // Setters
         void set_peso(int novo_peso) {peso = novo_peso;};

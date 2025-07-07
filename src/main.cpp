@@ -25,11 +25,6 @@ int main(int argc, char *argv[])
     // Chama os comandos passando o grafo já carregado
     Gerenciador::comandos(grafo);
 
-    // cout << "argc: " << argc << endl
-    //      << "argv: " << endl;
-    // for(int i = 0; i < argc; i++)
-    //     cout << i << ": " << argv[i] <<endl;
-    
     delete grafo;
     return 0;
 }

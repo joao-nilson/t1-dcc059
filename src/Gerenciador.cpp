@@ -227,29 +227,81 @@ void Gerenciador::comandos(Grafo *grafo)
 
     case 'h':
     {
-        vector<char> articulacao = grafo->vertices_de_articulacao();
-        cout << "Metodo de impressao em tela nao implementado" << endl
-             << endl;
+        int raio = grafo->raio();
+        cout << "Raio do grafo: " << raio << endl;
 
-        if (pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt"))
+        // Calculando diâmetro
+        int diametro = grafo->diametro();
+        cout << "Diâmetro do grafo: " << diametro << endl;
+
+        // Calculando centro
+        vector<char> centro = grafo->centro();
+        cout << "Centro do grafo: ";
+        imprimir_vetor_char(centro);
+        cout << endl;
+
+        // Calculando periferia
+        vector<char> periferia = grafo->periferia();
+        cout << "Periferia do grafo: ";
+        imprimir_vetor_char(periferia);
+        cout << endl;
+
+        // Perguntar se deseja salvar em arquivo
+        if (pergunta_imprimir_arquivo("grafo_raio_diametro_centro_periferia.txt"))
         {
-            cout << "Metodo de impressao em arquivo nao implementado" << endl;
+            ofstream arquivo("../output/grafo_raio_diametro_centro_periferia.txt");
+
+            if (!arquivo.is_open())
+            {
+                cout << "Erro ao abrir o arquivo para escrita." << endl;
+                break;
+            }
+
+            arquivo << "Raio do grafo: " << raio << endl;
+            arquivo << "Diâmetro do grafo: " << diametro << endl;
+            arquivo << "Centro do grafo: ";
+            for (size_t i = 0; i < centro.size(); ++i)
+            {
+                arquivo << centro[i];
+                if (i != centro.size() - 1)
+                {
+                    arquivo << ",";
+                }
+            }
+            arquivo << endl;
+
+            arquivo << "Periferia do grafo: ";
+            for (size_t i = 0; i < periferia.size(); ++i)
+            {
+                arquivo << periferia[i];
+                if (i != periferia.size() - 1)
+                {
+                    arquivo << ",";
+                }
+            }
+            arquivo << endl;
+
+            arquivo.close();
+            cout << "Raio, Diâmetro, Centro e Periferia salvos no arquivo grafo_raio_diametro_centro_periferia.txt" << endl;
         }
 
         break;
     }
     case 'i':
     {
-
         vector<char> articulacao = grafo->vertices_de_articulacao();
-        cout << "Metodo de impressao em tela nao implementado" << endl
-             << endl;
+        
+        // Print articulation points to screen
+        cout << "Vertices de articulacao: ";
+        imprimir_vetor_char(articulacao);
+        cout << endl;
 
-        if (pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt"))
+        // Save to file if requested
+        if (pergunta_imprimir_arquivo("vertices_articulacao.txt"))
         {
-            cout << "Metodo de impressao em arquivo nao implementado" << endl;
+            salvar_vetor_char_em_arquivo(articulacao, "vertices_articulacao.txt");
+            cout << "Vertices de articulacao salvos no arquivo vertices_articulacao.txt" << endl;
         }
-
         break;
     }
 
