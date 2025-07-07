@@ -1,0 +1,15 @@
+1 1 0
+5
+b
+c
+a
+e
+d
+a c 39
+d a 34
+a d 5
+b d 49
+d e 22
+a e 41
+e c 40
+e a 49

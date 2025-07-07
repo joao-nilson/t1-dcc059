@@ -1,0 +1,40 @@
+1 0 0
+10
+b
+j
+e
+h
+d
+a
+c
+g
+i
+f
+i a
+g h
+f c
+b h
+e b
+f e
+e a
+e c
+g i
+i d
+c g
+a c
+j h
+f i
+e i
+h e
+i c
+h d
+c i
+d e
+b g
+b f
+e j
+a h
+d c
+b a
+c d
+g e

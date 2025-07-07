@@ -1,0 +1,469 @@
+1 0 0
+50
+J
+A
+S
+X
+z
+C
+d
+R
+W
+e
+G
+l
+m
+v
+r
+w
+t
+E
+N
+O
+x
+n
+u
+K
+i
+s
+f
+T
+y
+j
+F
+a
+c
+q
+M
+k
+D
+b
+g
+p
+B
+Q
+U
+h
+P
+H
+L
+V
+o
+I
+M N
+A l
+b h
+F U
+x m
+j e
+d c
+G a
+B h
+q m
+C b
+s g
+c F
+R e
+u l
+e O
+M u
+c w
+R x
+U M
+O M
+z E
+v B
+c D
+M t
+D I
+A t
+y U
+g P
+k h
+L c
+A g
+T h
+A U
+j v
+L z
+v g
+Q B
+w G
+L U
+V L
+e S
+d D
+y c
+J I
+i e
+T f
+r H
+k P
+n O
+v r
+X C
+L W
+V e
+j I
+P O
+D i
+e s
+K p
+i v
+q V
+b l
+I x
+d A
+U m
+X B
+V T
+s A
+N r
+H s
+M h
+g U
+A u
+O f
+P B
+H P
+B M
+P E
+E D
+h c
+I y
+r e
+T K
+T z
+j x
+y k
+I o
+h q
+v G
+M I
+C s
+Q L
+j T
+w b
+v T
+T v
+C f
+K s
+i r
+p R
+B z
+D x
+r o
+h p
+i S
+N A
+F y
+O j
+C x
+t o
+r M
+j o
+L f
+n x
+c a
+u Q
+v l
+h O
+k I
+t v
+g w
+R t
+t h
+o z
+p j
+k B
+G g
+o W
+Q M
+l B
+w v
+m o
+P F
+B g
+D u
+X r
+F m
+b D
+Q i
+Q a
+t c
+t H
+c d
+q v
+l e
+M T
+d W
+e w
+s W
+p e
+b T
+E X
+X q
+u y
+Q I
+K k
+K C
+b J
+K D
+Q j
+k m
+Q s
+P L
+O d
+U d
+u G
+w d
+M j
+n o
+w S
+E j
+L X
+R X
+N u
+L O
+d y
+t C
+H K
+j W
+V M
+M g
+o p
+l G
+q C
+a b
+a z
+p o
+y T
+A v
+c s
+c R
+y t
+o l
+B q
+k j
+A o
+T J
+L m
+e t
+C L
+d C
+l J
+A x
+o b
+k R
+i z
+l h
+n e
+K W
+T I
+X g
+f k
+J D
+E w
+h a
+C A
+V z
+d K
+L h
+C M
+D g
+a k
+j d
+z o
+E b
+B p
+E C
+D z
+s V
+Q e
+Q q
+p n
+E r
+a u
+E v
+Q n
+q S
+K w
+J M
+T M
+o F
+E O
+V H
+I V
+J F
+u M
+k b
+D s
+B I
+I g
+T r
+D R
+b H
+G A
+U L
+T a
+h B
+B x
+S O
+l S
+L C
+e F
+x o
+x O
+L t
+d v
+S r
+m B
+e R
+t D
+p T
+P g
+w L
+f i
+D f
+a g
+W c
+x v
+D C
+e q
+f n
+i E
+Q u
+I f
+O Q
+D T
+U g
+L i
+J e
+g C
+L n
+o m
+i l
+W S
+J K
+D d
+y M
+V i
+u w
+G H
+o c
+i q
+j H
+W N
+S I
+R l
+D V
+H D
+i d
+f L
+W a
+a A
+A c
+r Q
+W e
+z t
+h x
+s a
+P k
+b x
+W d
+q D
+b i
+N X
+n s
+W h
+Q k
+g T
+s Q
+i x
+p w
+I m
+d B
+z x
+Q E
+d r
+y f
+U i
+x e
+b A
+V g
+g y
+a e
+G t
+T j
+U a
+m K
+T X
+R z
+o D
+N m
+D W
+E h
+H Q
+B W
+e o
+N y
+H m
+J i
+s o
+F A
+l O
+j z
+x u
+h s
+h J
+b k
+u C
+I H
+d U
+Q l
+X j
+v j
+z S
+u m
+I F
+A J
+N p
+p m
+b f
+L g
+t x
+H L
+F D
+k u
+J a
+s v
+h n
+I d
+c j
+H c
+B b
+l i
+m z
+t G
+x K
+G K
+q t
+n N
+R I
+a F
+T V
+h u
+S z
+V G
+i B
+f e
+c Q
+F j
+Q W
+U E
+H f
+j O
+W V
+L Q
+t I
+b q
