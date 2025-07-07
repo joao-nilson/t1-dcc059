@@ -11,7 +11,7 @@ Desenvolver um Tipo Abstrato de Dados - TAD ou uma Classe que represente grafos 
 - Orientados ou não orientados, 
 - Ponderados ou não ponderados (nos vértices e/ou nas arestas) 
 
-Implemente o conjunto de funcionalidades apresentados a seguir, detalhadas em sala de aula. O desenvolvimento dos algoritmos contribui como base para a resolução das questões das avaliações teóricas.
+Implemente o conjunto de fun>cionalidades apresentados a seguir, detalhadas em sala de aula. O desenvolvimento dos algoritmos contribui como base para a resolução das questões das avaliações teóricas.
 
 ## Orientações:
 
