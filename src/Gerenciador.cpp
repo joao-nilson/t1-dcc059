@@ -43,6 +43,55 @@ void salvar_vetor_char_em_arquivo(const vector<char> &vetor, const string &nome_
     arquivo << endl;
     arquivo.close();
 }
+void imprimir_lista_adjacencias(Grafo *grafo)
+{
+    vector<No*> lista = grafo->get_lista_adj();
+
+    for (No* no : lista)
+    {
+        cout << no->get_id() << ":";
+        vector<Aresta*> arestas = grafo->get_vizinhanca(no->get_id());
+
+        bool primeiro = true;
+        for (Aresta* a : arestas)
+        {
+            cout << (primeiro ? " " : " -> ") << a->id_no_alvo;
+            primeiro = false;
+        }
+        cout << endl;
+    }
+}
+
+void salvar_lista_adjacencias_em_arquivo(const string &nome_arquivo, Grafo *grafo)
+{
+    
+    string caminho_completo = "../output/" + to_string(contador_ordem_arquivo) + nome_arquivo;
+    ofstream arquivo(caminho_completo);
+
+    if (!arquivo.is_open())
+    {
+        cerr << "Erro ao abrir o arquivo " << nome_arquivo << endl;
+        return;
+    }
+
+    vector<No*> lista = grafo->get_lista_adj();
+
+    for (No* no : lista)
+    {
+        arquivo << no->get_id() << ":";
+        vector<Aresta*> arestas = grafo->get_vizinhanca(no->get_id());
+
+        bool primeiro = true;
+        for (Aresta* a : arestas)
+        {
+            arquivo << (primeiro ? " " : " -> ") << a->id_no_alvo;
+            primeiro = false;
+        }
+        arquivo << endl;
+    }
+
+    arquivo.close();
+}
 // Impressao e escrita - A,B,C,D - Fim
 
 void Gerenciador::comandos(Grafo *grafo)
