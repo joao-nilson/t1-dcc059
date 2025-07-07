@@ -149,18 +149,21 @@ void Gerenciador::comandos(Grafo *grafo)
 
     case 'b':
     {
-
         char id_no = get_id_entrada();
         vector<char> fecho_transitivo_indireto = grafo->fecho_transitivo_indireto(id_no);
-        cout << "Metodo de impressao em tela nao implementado" << endl
-             << endl;
 
+        cout << "Fecho transitivo indireto de " << id_no << ": ";
+        imprimir_vetor_char(fecho_transitivo_indireto);
+        cout << endl;
+
+        // Impressão no arquivo
         if (pergunta_imprimir_arquivo("fecho_trans_indir.txt"))
         {
-            cout << "Metodo de impressao em arquivo nao implementado" << endl;
+            salvar_vetor_char_em_arquivo(fecho_transitivo_indireto, "fecho_trans_indir.txt");
+            cout << "Fecho salvo no arquivo fecho_trans_indir.txt" << endl
+                 << endl;
         }
 
-        ;
         break;
     }
 
@@ -170,12 +173,15 @@ void Gerenciador::comandos(Grafo *grafo)
         char id_no_1 = get_id_entrada();
         char id_no_2 = get_id_entrada();
         vector<char> caminho_minimo_dijkstra = grafo->caminho_minimo_dijkstra(id_no_1, id_no_2);
-        cout << "Metodo de impressao em tela nao implementado" << endl
-             << endl;
 
+        cout << "Caminho mínimo (Dijkstra): ";
+        imprimir_vetor_char(caminho_minimo_dijkstra);
+        cout << endl;
+
+        // Impressão no arquivo
         if (pergunta_imprimir_arquivo("caminho_minimo_dijkstra.txt"))
         {
-            cout << "Metodo de impressao em arquivo nao implementado" << endl;
+            salvar_vetor_char_em_arquivo(caminho_minimo_dijkstra, "caminho_minimo_dijkstra.txt");
         }
 
         break;
@@ -187,41 +193,46 @@ void Gerenciador::comandos(Grafo *grafo)
         char id_no_1 = get_id_entrada();
         char id_no_2 = get_id_entrada();
         vector<char> caminho_minimo_floyd = grafo->caminho_minimo_floyd(id_no_1, id_no_2);
-        cout << "Metodo de impressao em tela nao implementado" << endl
-             << endl;
 
+        cout << "Caminho mínimo (Floyd): ";
+
+        imprimir_vetor_char(caminho_minimo_floyd);
+
+        cout << endl;
+
+        // Impressão no arquivo
         if (pergunta_imprimir_arquivo("caminho_minimo_floyd.txt"))
         {
-            cout << "Metodo de impressao em arquivo nao implementado" << endl;
+            salvar_vetor_char_em_arquivo(caminho_minimo_floyd, "caminho_minimo_floyd.txt");
         }
 
         break;
     }
+
     case 'e':
     {
-
         int tam;
         cout << "Digite o tamanho do subconjunto: ";
         cin >> tam;
 
         if (tam > 0 && tam <= grafo->get_ordem())
         {
-
             vector<char> ids = get_conjunto_ids(grafo, tam);
-            Grafo *arvore_geradora_minima_prim = grafo->arvore_geradora_minima_prim(ids);
-            cout << "Metodo de impressao em tela nao implementado" << endl
-                 << endl;
+            Grafo *agm = grafo->arvore_geradora_minima_prim(ids);
+
+            cout << "Árvore Geradora Mínima (Prim):\n";
+            imprimir_lista_adjacencias(agm);
 
             if (pergunta_imprimir_arquivo("agm_prim.txt"))
             {
-                cout << "Metodo de impressao em arquivo nao implementado" << endl;
+                salvar_lista_adjacencias_em_arquivo("agm_prim.txt", agm);
             }
 
-            delete arvore_geradora_minima_prim;
+            delete agm;
         }
         else
         {
-            cout << "Valor invalido" << endl;
+            cout << "Valor inválido\n";
         }
 
         break;
@@ -256,6 +267,7 @@ void Gerenciador::comandos(Grafo *grafo)
 
         break;
     }
+
 
     case 'g':
     {
