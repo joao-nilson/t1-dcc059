@@ -562,81 +562,96 @@ private:
 
 // Retorna um novo grafo com a Árvore Geradora Mínima usando o algoritmo de Kruskal
 Grafo* Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
-    // Verifica se a lista de nós está vazia
-    if (ids_nos.empty())
-        return nullptr;
+    if (ids_nos.empty()) return nullptr;
 
-    // Cria um mapa de ID para índice numérico (necessário para o UnionFind)
-    unordered_map<char, int> id_para_indice;
-    for (int i = 0; i < (int)ids_nos.size(); i++) {
-        id_para_indice[ids_nos[i]] = i;
-    }
-
-    // Cria um novo grafo para armazenar a AGM
+    // Cria novo grafo para a AGM
     Grafo* agm = new Grafo();
     agm->set_direcionado(false);
     agm->set_ponderado_aresta(true);
     agm->set_ponderado_vertice(false);
 
-    // Cria os nós no novo grafo e armazena ponteiros para fácil acesso
-    unordered_map<char, No*> mapa_nos;
+    // Adiciona nós ao novo grafo
     for (char id : ids_nos) {
-        No* no = new No(id);
-        mapa_nos[id] = no;
-        agm->adiciona_no(no);
+        agm->adiciona_no(new No(id));
     }
 
-    // Cria uma lista de todas as arestas entre os nós do subconjunto
-    vector<tuple<int, char, char>> arestas; // (peso, origem, destino)
-    for (char origem_id : ids_nos) {
-        No* no_origem = nullptr;
-        for (No* no : lista_adj) {
-            if (no->get_id() == origem_id) {
-                no_origem = no;
-                break;
-            }
-        }
-        if (!no_origem) continue;
-
-        // Percorre arestas e adiciona somente uma direção (evita duplicação)
-        for (Aresta* a : no_origem->get_arestas()) {
-            char destino_id = a->id_no_alvo;
-            if (id_para_indice.count(destino_id) && origem_id < destino_id) {
-                int peso = get_ponderado_aresta() ? a->peso : 1;
-                arestas.emplace_back(peso, origem_id, destino_id);
+    // Coleta e filtra arestas
+    vector<tuple<int, char, char>> arestas;
+    for (No* no : lista_adj) {
+        char u = no->get_id();
+        if (find(ids_nos.begin(), ids_nos.end(), u) == ids_nos.end()) continue;
+        
+        for (Aresta* a : no->get_arestas()) {
+            char v = a->id_no_alvo;
+            if (find(ids_nos.begin(), ids_nos.end(), v) == ids_nos.end()) continue;
+            
+            // Evita duplicação (grafo não direcionado)
+            if (u < v) {
+                arestas.emplace_back(a->peso, u, v);
             }
         }
     }
 
-    // Ordena as arestas pelo peso (menor peso primeiro)
-    sort(arestas.begin(), arestas.end(), [](auto& a, auto& b) {
-        return std::get<0>(a) < std::get<0>(b);
-    });
+    // Ordena arestas (por peso, depois por vértices para determinismo)
+    sort(arestas.begin(), arestas.end(), 
+        [](const auto& a, const auto& b) {
+            if (get<0>(a) != get<0>(b)) 
+                return get<0>(a) < get<0>(b);
+            if (get<1>(a) != get<1>(b)) 
+                return get<1>(a) < get<1>(b);
+            return get<2>(a) < get<2>(b);
+        });
 
-    // Inicializa estrutura UnionFind com número de nós do subconjunto
-    UnionFind uf((int)ids_nos.size());
+    // Implementação Union-Find otimizada
+    class UnionFind {
+        unordered_map<char, char> parent;
+    public:
+        UnionFind(const vector<char>& nodes) {
+            for (char id : nodes) {
+                parent[id] = id;
+            }
+        }
+        
+        char find(char u) {
+            if (parent[u] != u) {
+                parent[u] = find(parent[u]); // Path compression
+            }
+            return parent[u];
+        }
+        
+        bool unite(char u, char v) {
+            char rootU = find(u);
+            char rootV = find(v);
+            if (rootU == rootV) return false;
+            parent[rootV] = rootU;
+            return true;
+        }
+    };
 
-    // Percorre arestas em ordem crescente de peso
-    for (size_t i = 0; i < arestas.size(); ++i) {
-        auto tupla = arestas[i];
-        int peso = std::get<0>(tupla);
-        char origem = std::get<1>(tupla);
-        char destino = std::get<2>(tupla);
+    UnionFind uf(ids_nos);
+    int edgesAdded = 0;
+    const int neededEdges = ids_nos.size() - 1;
 
-        int idx_orig = id_para_indice[origem];
-        int idx_dest = id_para_indice[destino];
-
-        // Se a aresta não forma ciclo (os nós estão em componentes diferentes)
-        if (uf.unite(idx_orig, idx_dest)) {
-            // Adiciona a aresta ao grafo AGM
-            mapa_nos[origem]->add_aresta(destino, peso);
-            mapa_nos[destino]->add_aresta(origem, peso); // não direcionado
-
-            cout << "Adicionando aresta " << origem << " - " << destino << " (" << peso << ")" << endl;
+    // Construção da AGM
+    for (const auto& [peso, u, v] : arestas) {
+        if (edgesAdded == neededEdges) break;
+        
+        if (uf.unite(u, v)) {
+            No* noU = agm->get_no_by_id(u);
+            No* noV = agm->get_no_by_id(v);
+            if (noU && noV) {
+                noU->add_aresta(v, peso);
+                noV->add_aresta(u, peso);
+                edgesAdded++;
+            }
         }
     }
 
-    agm->set_ordem((int)ids_nos.size());
+    if (edgesAdded != neededEdges) {
+        cerr << "AVISO: Subgrafo não é conexo - AGM incompleta\n";
+    }
+
+    agm->set_ordem(ids_nos.size());
     return agm;
 }
 
