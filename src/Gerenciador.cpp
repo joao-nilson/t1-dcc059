@@ -43,6 +43,8 @@ void salvar_vetor_char_em_arquivo(const vector<char> &vetor, const string &nome_
     arquivo << endl;
     arquivo.close();
 }
+// Impressao e escrita - A,B,C,D - Fim
+
 void imprimir_lista_adjacencias(Grafo *grafo)
 {
     vector<No*> lista = grafo->get_lista_adj();
@@ -92,7 +94,7 @@ void salvar_lista_adjacencias_em_arquivo(const string &nome_arquivo, Grafo *graf
 
     arquivo.close();
 }
-// Impressao e escrita - A,B,C,D - Fim
+
 
 void Gerenciador::comandos(Grafo *grafo)
 {
@@ -240,31 +242,30 @@ void Gerenciador::comandos(Grafo *grafo)
 
     case 'f':
     {
-
         int tam;
         cout << "Digite o tamanho do subconjunto: ";
         cin >> tam;
-
+    
         if (tam > 0 && tam <= grafo->get_ordem())
         {
-
             vector<char> ids = get_conjunto_ids(grafo, tam);
-            Grafo *arvore_geradora_minima_kruskal = grafo->arvore_geradora_minima_kruskal(ids);
-            cout << "Metodo de impressao em tela nao implementado" << endl
-                 << endl;
-
+            Grafo* agm = grafo->arvore_geradora_minima_kruskal(ids);
+    
+            cout << "Árvore Geradora Mínima (Kruskal):\n";
+            imprimir_lista_adjacencias(agm);
+    
             if (pergunta_imprimir_arquivo("agm_kruskal.txt"))
             {
-                cout << "Metodo de impressao em arquivo nao implementado" << endl;
+                salvar_lista_adjacencias_em_arquivo("agm_kruskal.txt", agm);
+                cout << "AGM salva no arquivo agm_kruskal.txt" << endl;
             }
-
-            delete arvore_geradora_minima_kruskal;
+    
+            delete agm;
         }
         else
         {
-            cout << "Valor invalido" << endl;
+            cout << "Valor inválido" << endl;
         }
-
         break;
     }
 
