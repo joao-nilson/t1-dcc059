@@ -474,8 +474,6 @@ Grafo *Grafo::arvore_geradora_minima_prim(vector<char> ids_nos)
         }
     }
 
-    cout << "Criando AGM..." << endl;
-
     while (!heap.empty() && visitado.size() < ids_nos.size())
     {
         auto tupla = heap.top();
@@ -491,8 +489,6 @@ Grafo *Grafo::arvore_geradora_minima_prim(vector<char> ids_nos)
 
         mapa_nos[origem]->add_aresta(destino, peso);
         mapa_nos[destino]->add_aresta(origem, peso); // grafo não direcionado
-
-        cout << "Adicionando aresta " << origem << " - " << destino << " (" << peso << ")" << endl;
 
         for (Aresta *a : get_vizinhanca(destino))
         {
