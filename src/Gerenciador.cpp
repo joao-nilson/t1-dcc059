@@ -442,6 +442,13 @@ bool Gerenciador::pergunta_imprimir_arquivo(string nome_arquivo)
     cin >> resp;
     cout << endl;
 
+    if (cin.fail()) {
+        cin.clear();
+        cin.ignore(10000, '\n');
+        cout << "Entrada inválida. Tente novamente." << endl;
+        return pergunta_imprimir_arquivo(nome_arquivo);
+    }
+
     switch (resp)
     {
     case 1:
