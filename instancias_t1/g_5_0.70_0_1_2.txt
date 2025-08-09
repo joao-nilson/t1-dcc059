@@ -1,0 +1,15 @@
+0 1 0
+5
+d
+b
+e
+a
+c
+a b 36
+d a 9
+e c 7
+b e 39
+d b 46
+d c 37
+a c 8
+a e 32

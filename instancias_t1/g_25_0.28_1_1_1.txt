@@ -1,0 +1,112 @@
+1 1 0
+25
+n
+s
+a
+o
+w
+j
+g
+b
+p
+v
+x
+d
+c
+i
+y
+r
+m
+f
+h
+e
+q
+l
+u
+t
+k
+e r 44
+t q 46
+o a 25
+n s 3
+o q 10
+d g 13
+p b 28
+y v 7
+b r 32
+v p 27
+r m 38
+v i 7
+s w 18
+l q 15
+p d 43
+t u 18
+n l 6
+x f 12
+i w 10
+y f 42
+u p 2
+g c 12
+v t 25
+p s 24
+m f 46
+u d 47
+x b 45
+d b 35
+a n 7
+u m 35
+q r 19
+i j 6
+p o 21
+y u 17
+j a 32
+a d 45
+x w 35
+y s 35
+i d 18
+s h 9
+t c 34
+o r 16
+v f 38
+k y 30
+n j 21
+k m 45
+r h 46
+u l 10
+a o 28
+q x 46
+q c 43
+u c 20
+n b 45
+y c 31
+b p 22
+u e 31
+q d 15
+d h 7
+s t 19
+n w 12
+k a 36
+k i 47
+w n 4
+f p 45
+c w 27
+q u 15
+k t 39
+r f 18
+l n 48
+n k 19
+s u 32
+u x 18
+k h 32
+y l 7
+g w 31
+r g 8
+p k 8
+l i 42
+l k 40
+x o 48
+l f 4
+b i 43
+g u 28
+h c 31
+s e 27

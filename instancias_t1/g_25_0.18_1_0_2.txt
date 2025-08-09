@@ -1,0 +1,81 @@
+1 0 0
+25
+q
+m
+b
+a
+d
+c
+w
+o
+t
+e
+y
+s
+g
+r
+i
+j
+k
+n
+l
+v
+u
+p
+h
+f
+x
+u d
+f d
+y d
+o c
+l f
+h p
+f n
+i m
+i j
+x c
+n g
+b u
+p o
+q x
+y t
+i v
+j b
+e f
+q s
+r m
+x v
+v i
+h l
+u t
+q y
+v s
+d h
+w b
+q w
+h f
+c a
+l j
+f m
+x f
+y e
+l d
+t r
+q u
+j g
+u a
+v l
+m q
+c j
+h g
+f r
+s l
+k p
+h n
+i e
+q h
+o a
+s j
+q k
+o q

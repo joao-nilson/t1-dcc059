@@ -1,0 +1,101 @@
+1 1 0
+50
+x
+J
+e
+k
+z
+b
+H
+w
+K
+c
+M
+l
+N
+L
+G
+v
+n
+t
+F
+y
+h
+R
+f
+g
+o
+B
+W
+D
+C
+m
+s
+A
+Q
+T
+i
+d
+p
+a
+S
+u
+q
+X
+r
+U
+V
+E
+P
+O
+I
+j
+D z 14
+d R 24
+u N 11
+q t 6
+I E 24
+E W 28
+a d 39
+O U 7
+X e 14
+P A 32
+I a 44
+I O 29
+W c 30
+P s 16
+S p 46
+E b 3
+x j 8
+V S 4
+X q 21
+c J 42
+I g 31
+F l 40
+x T 8
+c k 11
+j I 1
+i h 37
+F G 45
+u f 26
+U n 12
+i Q 13
+T F 8
+E V 49
+v H 36
+a M 19
+p C 12
+V X 29
+V o 23
+C K 10
+S B 6
+f v 4
+O w 28
+O u 13
+T L 13
+I r 38
+I y 4
+i D 10
+A m 44
+I P 24
+U i 6

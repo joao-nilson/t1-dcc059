@@ -1,0 +1,101 @@
+1 0 0
+50
+F
+U
+p
+k
+s
+n
+W
+v
+a
+G
+S
+C
+z
+J
+A
+I
+L
+q
+j
+t
+h
+g
+d
+T
+X
+i
+l
+V
+E
+N
+m
+O
+B
+D
+w
+M
+x
+Q
+b
+y
+R
+e
+u
+o
+K
+r
+f
+P
+c
+H
+R B
+Q E
+Q h
+i d
+H r
+H P
+F y
+F w
+V A
+H f
+F b
+w m
+c K
+d j
+r o
+u S
+t I
+d s
+Q t
+b J
+e R
+r N
+B a
+B g
+H c
+r e
+B v
+b Q
+r i
+K u
+w V
+F H
+L U
+e D
+L p
+L G
+y z
+i T
+P q
+D X
+y l
+R n
+w W
+j L
+M O
+F M
+v k
+i C
+o x
