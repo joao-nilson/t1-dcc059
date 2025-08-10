@@ -1,4 +1,5 @@
 #include "Gerenciador.h"
+#include "DominacaoPerfeita.h"
 #include <fstream>
 
 // Impressao e escrita - A,B,C,D - Início
@@ -47,15 +48,15 @@ void salvar_vetor_char_em_arquivo(const vector<char> &vetor, const string &nome_
 
 void imprimir_lista_adjacencias(Grafo *grafo)
 {
-    vector<No*> lista = grafo->get_lista_adj();
+    vector<No *> lista = grafo->get_lista_adj();
 
-    for (No* no : lista)
+    for (No *no : lista)
     {
         cout << no->get_id() << ":";
-        vector<Aresta*> arestas = grafo->get_vizinhanca(no->get_id());
+        vector<Aresta *> arestas = grafo->get_vizinhanca(no->get_id());
 
         bool primeiro = true;
-        for (Aresta* a : arestas)
+        for (Aresta *a : arestas)
         {
             cout << (primeiro ? " " : " -> ") << a->id_no_alvo;
             primeiro = false;
@@ -66,7 +67,7 @@ void imprimir_lista_adjacencias(Grafo *grafo)
 
 void salvar_lista_adjacencias_em_arquivo(const string &nome_arquivo, Grafo *grafo)
 {
-    
+
     string caminho_completo = "../output/" + to_string(contador_ordem_arquivo) + nome_arquivo;
     ofstream arquivo(caminho_completo);
 
@@ -76,15 +77,15 @@ void salvar_lista_adjacencias_em_arquivo(const string &nome_arquivo, Grafo *graf
         return;
     }
 
-    vector<No*> lista = grafo->get_lista_adj();
+    vector<No *> lista = grafo->get_lista_adj();
 
-    for (No* no : lista)
+    for (No *no : lista)
     {
         arquivo << no->get_id() << ":";
-        vector<Aresta*> arestas = grafo->get_vizinhanca(no->get_id());
+        vector<Aresta *> arestas = grafo->get_vizinhanca(no->get_id());
 
         bool primeiro = true;
-        for (Aresta* a : arestas)
+        for (Aresta *a : arestas)
         {
             arquivo << (primeiro ? " " : " -> ") << a->id_no_alvo;
             primeiro = false;
@@ -94,7 +95,6 @@ void salvar_lista_adjacencias_em_arquivo(const string &nome_arquivo, Grafo *graf
 
     arquivo.close();
 }
-
 
 void Gerenciador::comandos(Grafo *grafo)
 {
@@ -108,6 +108,10 @@ void Gerenciador::comandos(Grafo *grafo)
     cout << "(f) Arvore Geradora Minima (Algoritmo de Kruskal);" << endl;
     cout << "(g) Arvore de caminhamento em profundidade;" << endl;
     cout << "(h) Raio, diametro, centro e periferia do grafo;" << endl;
+    cout << "(j) Conjunto Dominante Perfeito - Guloso;" << endl;
+    cout << "(k) Conjunto Dominante Perfeito - GRASP;" << endl;
+    cout << "(l) Conjunto Dominante Perfeito - Reativo;" << endl;
+
     cout << "(0) Sair;" << endl
          << endl;
 
@@ -245,21 +249,21 @@ void Gerenciador::comandos(Grafo *grafo)
         int tam;
         cout << "Digite o tamanho do subconjunto: ";
         cin >> tam;
-    
+
         if (tam > 0 && tam <= grafo->get_ordem())
         {
             vector<char> ids = get_conjunto_ids(grafo, tam);
-            Grafo* agm = grafo->arvore_geradora_minima_kruskal(ids);
-    
+            Grafo *agm = grafo->arvore_geradora_minima_kruskal(ids);
+
             cout << "Árvore Geradora Mínima (Kruskal):\n";
             imprimir_lista_adjacencias(agm);
-    
+
             if (pergunta_imprimir_arquivo("agm_kruskal.txt"))
             {
                 salvar_lista_adjacencias_em_arquivo("agm_kruskal.txt", agm);
                 cout << "AGM salva no arquivo agm_kruskal.txt" << endl;
             }
-    
+
             delete agm;
         }
         else
@@ -269,7 +273,6 @@ void Gerenciador::comandos(Grafo *grafo)
         break;
     }
 
-
     case 'g':
     {
         char id_no = get_id_entrada();
@@ -277,19 +280,21 @@ void Gerenciador::comandos(Grafo *grafo)
 
         if (arvore_caminhamento_profundidade != nullptr)
         {
-            cout << endl << "Arvore de caminhamento em profundidade resultante:" << endl;
+            cout << endl
+                 << "Arvore de caminhamento em profundidade resultante:" << endl;
             imprimir_lista_adjacencias(arvore_caminhamento_profundidade);
             cout << endl;
 
             if (pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt"))
             {
                 salvar_lista_adjacencias_em_arquivo("arvore_caminhamento_profundidade.txt", arvore_caminhamento_profundidade);
-                cout << "Arvore salva no arquivo arvore_caminhamento_profundidade.txt" << endl << endl;
+                cout << "Arvore salva no arquivo arvore_caminhamento_profundidade.txt" << endl
+                     << endl;
             }
 
             delete arvore_caminhamento_profundidade;
         }
-        
+
         break;
     }
 
@@ -358,7 +363,7 @@ void Gerenciador::comandos(Grafo *grafo)
     case 'i':
     {
         vector<char> articulacao = grafo->vertices_de_articulacao();
-        
+
         // Print articulation points to screen
         cout << "Vertices de articulacao: ";
         imprimir_vetor_char(articulacao);
@@ -369,6 +374,69 @@ void Gerenciador::comandos(Grafo *grafo)
         {
             salvar_vetor_char_em_arquivo(articulacao, "vertices_articulacao.txt");
             cout << "Vertices de articulacao salvos no arquivo vertices_articulacao.txt" << endl;
+        }
+        break;
+    }
+
+    case 'j':
+    {
+        auto res = DominacaoPerfeita::guloso(grafo);
+        if (!res.factivel)
+        {
+            cout << "Falha: heuristica não encontrou PDS.\n\n";
+            break;
+        }
+        cout << "PDS (guloso) tamanho " << res.custo() << ": ";
+        imprimir_vetor_char(res.D);
+        cout << endl;
+        if (pergunta_imprimir_arquivo("pds_guloso.txt"))
+        {
+            salvar_vetor_char_em_arquivo(res.D, "pds_guloso.txt");
+        }
+        break;
+    }
+    case 'k':
+    {
+        int it;
+        double alpha;
+        cout << "Iteracoes: ";
+        cin >> it;
+        cout << "Alpha [0..1]: ";
+        cin >> alpha;
+        auto res = DominacaoPerfeita::grasp(grafo, it, alpha);
+        if (!res.factivel)
+        {
+            cout << "Falha: GRASP não encontrou PDS.\n\n";
+            break;
+        }
+        cout << "PDS (GRASP) tamanho " << res.custo() << ": ";
+        imprimir_vetor_char(res.D);
+        cout << endl;
+        if (pergunta_imprimir_arquivo("pds_grasp.txt"))
+        {
+            salvar_vetor_char_em_arquivo(res.D, "pds_grasp.txt");
+        }
+        break;
+    }
+    case 'l':
+    {
+        int it, bloco;
+        cout << "Iteracoes totais: ";
+        cin >> it;
+        cout << "Tamanho do bloco de adaptacao: ";
+        cin >> bloco;
+        auto res = DominacaoPerfeita::reativo(grafo, it, {0.0, 0.25, 0.5, 0.75, 1.0}, bloco);
+        if (!res.factivel)
+        {
+            cout << "Falha: Reativo não encontrou PDS.\n\n";
+            break;
+        }
+        cout << "PDS (Reativo) tamanho " << res.custo() << ": ";
+        imprimir_vetor_char(res.D);
+        cout << endl;
+        if (pergunta_imprimir_arquivo("pds_reativo.txt"))
+        {
+            salvar_vetor_char_em_arquivo(res.D, "pds_reativo.txt");
         }
         break;
     }
@@ -442,7 +510,8 @@ bool Gerenciador::pergunta_imprimir_arquivo(string nome_arquivo)
     cin >> resp;
     cout << endl;
 
-    if (cin.fail()) {
+    if (cin.fail())
+    {
         cin.clear();
         cin.ignore(10000, '\n');
         cout << "Entrada inválida. Tente novamente." << endl;

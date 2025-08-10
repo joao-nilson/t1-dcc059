@@ -1,0 +1,37 @@
+0 0 0
+15
+S
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+L
+M
+N
+C A
+C B
+C D
+A B
+B D
+F E
+F G
+F H
+G H
+J I
+J K
+J L
+I K
+K L
+M N
+M S
+N S
+C F
+F J
+J M
