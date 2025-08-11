@@ -14,6 +14,14 @@ SRCS := \
     No.cpp \
     main.cpp
 
+# Lista de cabeçalhos importantes
+HEADERS := \
+    Aresta.h \
+    No.h \
+    Grafo.h \
+    DominacaoPerfeita.h \
+    DominacaoPerfeitaExperimentos.h
+
 # Gera lista de objetos
 OBJS := $(SRCS:.cpp=.o)
 DEPS := $(OBJS:.o=.d)
@@ -26,7 +34,7 @@ $(TARGET): $(OBJS)
 	$(CXX) $(LDFLAGS) $^ -o $@
 
 # Regra genérica para compilar arquivos .cpp
-%.o: %.cpp
+%.o: %.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 # Inclui dependências de cabeçalhos

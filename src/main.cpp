@@ -1,29 +1,53 @@
-#include <iostream>
-#include <iterator>
-#include "Gerenciador.h"
-#include "Grafo.h"
-
 #include <filesystem>
+#include <vector>
+#include <iostream>
 #include "DominacaoPerfeitaExperimentos.h"
+
 namespace fs = std::filesystem;
 
 int main() {
-    std::vector<std::string> all_graph_files;
+    std::vector<std::string> filenames;
     
-    const std::string directories[] = {
-        "instancias_t1",
-        "instancias_t2"
+    // Diretórios com as instâncias
+    const std::string t1_path = "instancias_t1";
+    const std::string t2_path = "instancias_t2";
+    
+    // Função para adicionar arquivos de um diretório
+    auto add_files_from_dir = [&](const std::string& path) {
+        if (!fs::exists(path)) {
+            std::cerr << "Aviso: Diretório não encontrado - " << path << std::endl;
+            return;
+        }
+        
+        try {
+            for (const auto& entry : fs::directory_iterator(path)) {
+                if (entry.path().extension() == ".txt") {
+                    filenames.push_back(entry.path().string());
+                    std::cout << "Adicionado: " << entry.path().filename().string() << std::endl;
+                }
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Erro ao acessar " << path << ": " << e.what() << std::endl;
+        }
     };
     
-    for (const auto& dir : directories) {
-        for (const auto& entry : fs::directory_iterator(dir)) {
-            if (entry.is_regular_file() && entry.path().extension() == ".txt") {
-                all_graph_files.push_back(entry.path().string());
-            }
-        }
+    // Coletar arquivos dos diretórios
+    std::cout << "Coletando arquivos de instâncias..." << std::endl;
+    add_files_from_dir(t1_path);
+    add_files_from_dir(t2_path);
+    
+    if (filenames.empty()) {
+        std::cerr << "Erro: Nenhum arquivo de instância encontrado!" << std::endl;
+        std::cerr << "Certifique-se que os diretórios existem e contêm arquivos .txt:" << std::endl;
+        std::cerr << " - " << fs::absolute(t1_path) << std::endl;
+        std::cerr << " - " << fs::absolute(t2_path) << std::endl;
+        return 1;
     }
     
-    DominacaoPerfeitaExperimentos::run_experiments(all_graph_files);
+    std::cout << "\nIniciando experimentos com " << filenames.size() << " arquivos..." << std::endl;
+    DominacaoPerfeitaExperimentos::run_experiments(filenames);
+    
+    std::cout << "\nExperimentos concluídos com sucesso!" << std::endl;
     return 0;
 }
 
