@@ -7,6 +7,13 @@
 #include <fstream>
 #include <functional>
 #include "Grafo.h"
+#include <unordered_map>
+#include <random>
+#include <queue>
+#include <climits>
+#include <iostream>
+
+using namespace std;
 
 
 using std::vector;
@@ -688,6 +695,29 @@ void run_reactive_experiment(Grafo* G) {
         std::cout << "Qualidade Final: " << reactive_track.qualities.back() << "\n";
     }
 
+}
+
+
+
+
+// Todas as implementações das funções da classe DominacaoPerfeita
+// (manter todas as funções que estavam aqui originalmente)
+
+// Adicionar esta implementação no final:
+void DominacaoPerfeita::write_iteration_csv(const IterationData& data, const std::string& filename) {
+    ofstream out(filename);
+    if (!out) {
+        cerr << "Erro ao abrir arquivo " << filename << " para escrita\n";
+        return;
+    }
+    
+    out << "Iteration,GreedyQuality,GRASPQuality,ReactiveQuality\n";
+    for (size_t i = 0; i < data.iterations.size(); i++) {
+        out << data.iterations[i] << ","
+            << data.greedy_qualities[i] << ","
+            << data.grasp_qualities[i] << ","
+            << data.reactive_qualities[i] << "\n";
+    }
 }
 
 // void write_iteration_csv(const IterationData& data, const std::string& filename) {

@@ -4,6 +4,13 @@
 #include "Grafo.h"
 #include <unordered_map>
 #include <random>
+#include <vector>
+#include <unordered_set>
+#include <algorithm>
+#include <chrono>
+#include <queue>
+#include <fstream>
+#include <functional>
 
 struct PDSResultado {
     std::vector<char> D;      // solução

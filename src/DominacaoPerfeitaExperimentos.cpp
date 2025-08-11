@@ -1,52 +1,23 @@
 #include "DominacaoPerfeitaExperimentos.h"
-#include "Grafo.h"
-#include <chrono>
-#include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
-#include "DominacaoPerfeita.h"
-#include "DominacaoPerfeita.cpp"
 #include <chrono>
 
 namespace fs = std::filesystem;
 
-// struct ExperimentResult {
-//     std::string filename;
-//     int vertices;
-//     int edges;
-//     double density;
-//     bool directed;
-//     bool edge_weighted;
-//     bool vertex_weighted;
-//     int greedy_size;
-//     int grasp_size;
-//     int reactive_size;
-//     double greedy_time;
-//     double grasp_time;
-//     double reactive_time;
-// };
-
-void run_quality_experiment(Grafo* G) {
-    IterationTracker greedy_track, grasp_track, reactive_track;
+void DominacaoPerfeitaExperimentos::run_experiments(
+    const std::vector<std::string>& filenames, 
+    const std::string& output_csv) {
     
-    auto greedy_res = DominacaoPerfeita::guloso(G, &greedy_track);
-    auto grasp_res = DominacaoPerfeita::grasp(G, 100, 0.5, &grasp_track);
-    auto reactive_res = DominacaoPerfeita::reativo(G, 100, {0.0,0.25,0.5,0.75,1.0}, 10, &reactive_track);
-}
-
-void DominacaoPerfeitaExperimentos::run_experiments(const std::vector<std::string>& filenames, 
-                            const std::string& output_csv) {
     std::ofstream out(output_csv);
     out << "Grafo,Vertices,Arestas,Densidade,Direcao,PesoAresta,PesoVertice,"
         << "TamanhoGuloso,TamanhoGRASP,TamanhoReativo,TempoGuloso,TempoGRASP,TempoReativo\n";
     
     for (const auto& filename : filenames) {
-        Grafo* G = new Grafo(filename);
-        // if (!G) continue;
+        Grafo* G = new Grafo();
         G->carregaArquivo(filename);
-
-
+        
         ExperimentResult res = run_single_experiment(G, filename);
         write_result(out, res);
         
@@ -57,23 +28,16 @@ void DominacaoPerfeitaExperimentos::run_experiments(const std::vector<std::strin
 ExperimentResult DominacaoPerfeitaExperimentos::run_single_experiment(Grafo* G, const std::string& filename) {
     
     ExperimentResult result;
-    
     parse_filename(filename, result);
     
     // pega propriedades basicas
     result.vertices = G->get_ordem();
     result.edges = G->get_num_arestas();
 
-    // result.edges = 0;
-    // for (No* no : G->get_lista_adj()) {
-    //     result.edges += no->get_arestas().size();
-    // }
-    // if (!G->get_direcionado()) result.edges /= 2;
-    
     // roda e mede tempo dos algoritmos
-    auto greedy = run_algorithm(G, AlgorithmType::GREEDY);
-    auto grasp = run_algorithm(G, AlgorithmType::GRASP);
-    auto reactive = run_algorithm(G, AlgorithmType::REACTIVE);
+    auto greedy = run_algorithm(G, 0); // 0 = Guloso
+    auto grasp = run_algorithm(G, 1);  // 1 = GRASP
+    auto reactive = run_algorithm(G, 2); // 2 = Reativo
     
     result.greedy_size = greedy.first;
     result.greedy_time = greedy.second;
@@ -85,28 +49,31 @@ ExperimentResult DominacaoPerfeitaExperimentos::run_single_experiment(Grafo* G, 
     return result;
 }
 
-std::pair<int, double> DominacaoPerfeitaExperimentos::run_algorithm(Grafo* G, AlgorithmType type) 
-{
+std::pair<int, double> DominacaoPerfeitaExperimentos::run_algorithm(
+    Grafo* G, int type) {
+    
     auto start = std::chrono::high_resolution_clock::now();
     PDSResultado result;
     
     switch(type) {
-        case AlgorithmType::GREEDY:
+        case 0: // Guloso
             result = DominacaoPerfeita::guloso(G);
             break;
-        case AlgorithmType::GRASP:
+        case 1: // GRASP
             result = DominacaoPerfeita::grasp(G, 100, 0.5);
             break;
-        case AlgorithmType::REACTIVE:
+        case 2: // Reativo
             result = DominacaoPerfeita::reativo(G, 100);
             break;
     }
     
     auto end = std::chrono::high_resolution_clock::now();
-    double elapsed = std::chrono::duration<double>(end-start).count();
+    double elapsed = std::chrono::duration<double>(end - start).count();
     
     return {result.factivel ? result.custo() : -1, elapsed};
 }
+
+
 
 void DominacaoPerfeitaExperimentos::parse_filename(
     const std::string& full_path, ExperimentResult& res) 

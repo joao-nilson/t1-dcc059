@@ -1,10 +1,13 @@
-#ifndef PERFECT_DOMINATION_EXPERIMENTS_H
-#define PERFECT_DOMINATION_EXPERIMENTS_H
+#ifndef DOMINACAO_PERFEITA_EXPERIMENTOS_H
+#define DOMINACAO_PERFEITA_EXPERIMENTOS_H
 
+#include "DominacaoPerfeita.h"
 #include <string>
 #include <vector>
-#include <functional>
-#include "DominacaoPerfeita.h"
+#include <fstream>
+
+//enum class AlgorithmType { GREEDY, GRASP, REACTIVE };
+
 
 struct ExperimentResult {
     std::string filename;
@@ -21,8 +24,6 @@ struct ExperimentResult {
     double grasp_time;
     double reactive_time;
 };
-enum class AlgorithmType { GREEDY, GRASP, REACTIVE };
-
 
 class DominacaoPerfeitaExperimentos {
 public:
@@ -30,9 +31,10 @@ public:
                               const std::string& output_csv = "results.csv");
     static ExperimentResult run_single_experiment(Grafo* G, const std::string& filename);
     static void parse_filename(const std::string& full_path, ExperimentResult& res);
-    static std::pair<int, double> run_algorithm(Grafo* G, AlgorithmType type);
+    static std::pair<int, double> run_algorithm(Grafo* G, int type);
     static void write_result(std::ofstream& out, const ExperimentResult& res);
     void write_iteration_csv(const IterationData& data, const std::string& filename);
 };
 
-#endif
+
+#endif // DOMINACAO_PERFEITA_EXPERIMENTOS_H
