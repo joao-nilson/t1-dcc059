@@ -1,0 +1,7 @@
+Coisas pra fazer yay!
+
+Implementar mais avaliações dos algoritmos
+
+Carregar essas avaliações com os grafos das instancias t1 e t2
+
+montar a main pra chamar essa merda toda
