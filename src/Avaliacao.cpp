@@ -49,7 +49,7 @@ EvaluationResult evaluate_algorithm(
 }
 
 void run_evaluations(const std::vector<Grafo*>& test_graphs) {
-    std::ofstream out("resultados.csv");
+    std::ofstream out("temp_exec.csv");
     out << "Grafo,Vertices,Arestas,Algoritmo,Tempo,Tamanho,TaxaSucesso\n";
     
     for (Grafo* G : test_graphs) {
