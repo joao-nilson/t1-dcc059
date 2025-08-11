@@ -65,13 +65,23 @@ bool DominacaoPerfeita::verificaPDS(Grafo* G, const vector<char>& Dvec) {
 
 // Construtora genérica (gulosa / GRASP): devolve solução ou falha
 PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double alpha) {
-    vector<char> ids = ordena_ids(G->get_ids_vertices());
+    vector<char> ids;// = ordena_ids(G->get_ids_vertices());
+    for (No* no : G->get_lista_adj()) {
+        ids.push_back(no->get_id());
+    }
+    sort(ids.begin(), ids.end());
+
     unordered_set<char> D;                 // solução parcial
     unordered_map<char,int> dom;           // dominadores para V\D
-    unordered_map<char,int> deg = grau(G); // graus
+    unordered_map<char,int> deg; // = grau(G); // graus
 
     // Inicializa dom para não-D (ainda vazio; vamos manter coerente a cada passo)
     for (char v : ids) if (!deg.count(v)) deg[v]=0; // robustez
+    // for (char v : ids) {
+    //     deg[v] = static_cast<int>(G->get_vizinhanca(v).size());
+    //     if (deg[v] == 0) D.insert(v);
+    //     else dom[v] = 0;
+    // }
 
     auto esta_fora = [&](char v){ return D.count(v)==0; };
     auto factivel = [&](char u)->bool {
@@ -213,27 +223,126 @@ PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double a
     return PDSResultado{ ok ? Dout : vector<char>{}, ok };
 }
 
-PDSResultado DominacaoPerfeita::guloso(Grafo* G) {
-                            cout << "[DEBUG] Guloso PDS iniciado\n";
-    std::mt19937 rng(123); // determinístico
-    return construcao(G, rng, -1.0); // alpha<0 => guloso puro
+PDSResultado DominacaoPerfeita::guloso(Grafo* G, IterationTracker* tracker) 
+{
+    vector<char> ids;
+        for (No* no : G->get_lista_adj()) {
+            ids.push_back(no->get_id());
+        }
+        sort(ids.begin(), ids.end());
+        
+        unordered_set<char> D;
+        unordered_map<char, int> dom;
+        unordered_map<char, int> deg;
+        
+        for (char v : ids) {
+            deg[v] = static_cast<int>(G->get_vizinhanca(v).size());
+            if (deg[v] == 0) D.insert(v);
+            else dom[v] = 0;
+        }
+
+        auto factivel = [&](char u) {
+            for (Aresta* a : G->get_vizinhanca(u)) {
+                char w = a->id_no_alvo;
+                if (D.count(w)) continue;
+                if (dom[w] >= 1) return false;
+            }
+            return true;
+        };
+
+        auto ganho = [&](char u) {
+            int g = 0;
+            for (Aresta* a : G->get_vizinhanca(u)) {
+                char w = a->id_no_alvo;
+                if (D.count(w)) continue;
+                if (dom[w] == 0) g++;
+            }
+            return g;
+        };
+
+        while (true) {
+            // Promoção anti-deadlock
+            char w_prom = 0;
+            for (char w : ids) {
+                if (D.count(w) || dom[w] != 1) continue;
+                if (factivel(w) && ganho(w) > 0) {
+                    w_prom = w;
+                    break;
+                }
+            }
+            
+            if (w_prom) {
+                D.insert(w_prom);
+                dom.erase(w_prom);
+                for (Aresta* a : G->get_vizinhanca(w_prom)) {
+                    char z = a->id_no_alvo;
+                    if (!D.count(z)) dom[z] = 1;
+                }
+                continue;
+            }
+
+            // Lista de candidatos
+            vector<pair<char, int>> cand;
+            for (char u : ids) {
+                if (D.count(u)) continue;
+                if (!factivel(u)) continue;
+                int g = ganho(u);
+                if (g > 0) cand.push_back({u, g});
+            }
+
+            if (cand.empty()) {
+                break;
+            }
+
+            // Escolha gulosa
+            sort(cand.begin(), cand.end(), [](auto& a, auto& b) {
+                return (a.second != b.second) ? (a.second > b.second) : (a.first < b.first);
+            });
+            char escolhido = cand[0].first;
+
+            // Atualização
+            D.insert(escolhido);
+            dom.erase(escolhido);
+            for (Aresta* a : G->get_vizinhanca(escolhido)) {
+                char w = a->id_no_alvo;
+                if (!D.count(w)) dom[w] = 1;
+            }
+        }
+
+        vector<char> Dout(D.begin(), D.end());
+        sort(Dout.begin(), Dout.end());
+        bool ok = verificaPDS(G, Dout);
+        return {Dout, ok};
+
+
+    //                         cout << "[DEBUG] Guloso PDS iniciado\n";
+    // std::mt19937 rng(123); // determinístico
+    // return construcao(G, rng, -1.0); // alpha<0 => guloso puro
 }
 
-PDSResultado DominacaoPerfeita::grasp(Grafo* G, int iteracoes, double alpha, unsigned seed) {
+PDSResultado DominacaoPerfeita::grasp(Grafo* G, int iteracoes, double alpha, 
+    IterationTracker* tracker, unsigned seed) 
+{
     std::mt19937 rng(seed);
-    PDSResultado best; best.factivel=false;
-    for (int it=0; it<iteracoes; ++it) {
+    PDSResultado best; //best.factivel=false;
+    
+    for (int it=0; it<iteracoes; ++it) 
+    {
         auto res = construcao(G, rng, alpha);
-        if (res.factivel && (!best.factivel || res.custo() < best.custo())) {
+        if (res.factivel && (!best.factivel || res.custo() < best.custo())) 
+        {
             best = res;
         }
+        if (tracker) tracker->record(it + 1, best);
     }
     return best;
 }
 
 PDSResultado DominacaoPerfeita::reativo(Grafo* G, int iteracoes,
-                                        const vector<double>& alphas, int bloco,
-                                        unsigned seed) {
+                                        const vector<double>& alphas, int bloco, 
+                                        IterationTracker* tracker,
+                                        unsigned seed) 
+{
     std::mt19937 rng(seed);
     int k = (int)alphas.size();
     vector<double> prob(k, 1.0/k);
@@ -245,12 +354,13 @@ PDSResultado DominacaoPerfeita::reativo(Grafo* G, int iteracoes,
         return dist(rng);
     };
 
-    PDSResultado best; best.factivel=false;
+    PDSResultado best; //best.factivel=false;
 
     for (int it=1; it<=iteracoes; ++it) {
         int idx = escolhe_idx();
         double alpha = alphas[idx];
         auto res = construcao(G, rng, alpha);
+
         if (res.factivel) {
             // qualidade = 1 / |D| (menor D é melhor)
             double q = 1.0 / std::max(1, res.custo());
@@ -259,14 +369,18 @@ PDSResultado DominacaoPerfeita::reativo(Grafo* G, int iteracoes,
             if (!best.factivel || res.custo() < best.custo()) best = res;
         }
 
+        if (tracker) tracker->record(it, best);
+
         // Atualiza probabilidades a cada "bloco" iterações
         if (it % bloco == 0) {
             vector<double> media(k, 0.0);
             double soma = 0.0;
+
             for (int i=0;i<k;i++){
                 media[i] = (cont[i] ? score[i]/cont[i] : 0.0);
                 soma += media[i];
             }
+            
             if (soma > 0.0) {
                 for (int i=0;i<k;i++) prob[i] = media[i] / soma;
             } else {
@@ -364,6 +478,10 @@ void DominacaoPerfeita::write_runtime_csv(const RuntimeData& data, const std::st
 
 void write_iteration_csv(const IterationData& data, const std::string& filename) {
     std::ofstream out(filename);
+    if (!out.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << " for writing\n";
+        return;
+    }
     out << "Iterações,QualidadeGuloso,QualidadeGRASP,QualidadeReativo\n";
     
     for (size_t i = 0; i < data.iterations.size(); ++i) {
@@ -571,3 +689,21 @@ void run_reactive_experiment(Grafo* G) {
     }
 
 }
+
+// void write_iteration_csv(const IterationData& data, const std::string& filename) {
+//     std::ofstream out(filename);
+//     if (!out.is_open()) {
+//         std::cerr << "Error: Could not open file " << filename << " for writing\n";
+//         return;
+//     }
+    
+//     // Write header
+//     out << "Iteration,Quality\n";
+    
+//     // Write data rows
+//     for (size_t i = 0; i < data.iterations.size() && i < data.reactive_qualities.size(); ++i) {
+//         out << data.iterations[i] << "," << data.reactive_qualities[i] << "\n";
+//     }
+    
+//     out.close();
+// }
