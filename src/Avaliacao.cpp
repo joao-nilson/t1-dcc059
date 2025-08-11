@@ -18,6 +18,13 @@ struct RuntimeData {
     std::vector<double> reactive_times;
 };
 
+struct IterationData {
+    std::vector<int> iterations;
+    std::vector<double> greedy_qualities;
+    std::vector<double> grasp_qualities;
+    std::vector<double> reactive_qualities;
+};
+
 EvaluationResult evaluate_algorithm(
     Grafo* G, 
     std::function<PDSResultado(Grafo*)> algorithm, 
