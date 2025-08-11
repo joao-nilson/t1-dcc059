@@ -36,8 +36,12 @@ Grafo::Grafo(const string &nome_arquivo) : Grafo()
 // Carrega o grafo a partir de um arquivo
 void Grafo::carregaArquivo(const string &grafo)
 {
-    string caminho = "../instancias/" + grafo;
+    string caminho = grafo;
     cout << "Tentando abrir arquivo em: " << caminho << endl;
+
+    //caminho antigo das instancias
+    // string caminho = "../instancias/" + grafo;
+    // cout << "Tentando abrir arquivo em: " << caminho << endl;
 
     ifstream arquivo(caminho);
     string line;
