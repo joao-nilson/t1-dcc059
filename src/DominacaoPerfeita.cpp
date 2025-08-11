@@ -104,18 +104,59 @@ PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double a
     for (char v : ids) if (D.count(v)==0) dom[v]=0;
 
     auto existe_fora_nao_dominado = [&](){
-        for (auto &kv : dom) if (kv.second==0) return true;
+        for (auto &kv : dom) if (kv.second==0){
+            cout << "[DEBUG] Ainda nao dominado: " << kv.first << "\n";
+        return true;
+        }
         return false;
     };
 
     // Laço principal
     while (existe_fora_nao_dominado()) {
-        // Constrói conjunto de candidatos viáveis com scores
+
+        // ==============================
+        // PASSO 0 — PROMOÇÃO (ANTI-DEADLOCK)
+        // Se existe algum vértice w fora de D com dom[w] == 1 e ele é factível,
+        // promovemos w imediatamente para D. Isso quebra bloqueios do tipo C–(M)–(F,J).
+        // ==============================
+        {
+            
+            char w_prom = 0;
+            bool achou = false;
+            for (char w : ids) if (D.count(w) == 0) {
+                int domw = 0;
+                auto it = dom.find(w);
+                if (it != dom.end()) domw = it->second;
+
+                if (domw == 1 && factivel(w) && ganho(w) > 0) {
+                    w_prom = w;
+                    achou = true;
+                    break;
+                }
+            }
+
+            if (achou) {
+                // Inclui promovido e atualiza dom
+                                         cout << "[DEBUG] Promovido: " << w_prom 
+                                          << " (ganho=" << ganho(w_prom) << ")\n";
+                D.insert(w_prom);
+                dom.erase(w_prom);
+                for (char z : vizinhos(G, w_prom)) {
+                    if (D.count(z) == 0) dom[z] = 1; // passa a ser dominado por 1
+                }
+                // volta ao topo do while para reavaliar; isso evita montar cand/RCL à toa
+                continue;
+            }
+        }
+
+        // ==============================
+        // PASSO 1 — CANDIDATOS VIÁVEIS (como antes)
+        // ==============================
         vector<pair<char,int>> cand;
-        for (char u : ids) if (D.count(u)==0) {
+        for (char u : ids) if (D.count(u) == 0) {
             if (factivel(u)) {
                 int g = ganho(u);
-                if (g>0) cand.push_back({u,g});
+                if (g > 0) cand.push_back({u, g});
             }
         }
         if (cand.empty()) {
@@ -123,10 +164,11 @@ PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double a
             return PDSResultado{ {}, false };
         }
 
-        // Escolha do candidato: guloso puro (alpha<0) ou RCL (alpha in [0,1])
+        // ==============================
+        // PASSO 2 — ESCOLHA (guloso puro ou RCL se alpha >= 0)
+        // ==============================
         char escolhido;
         if (alpha < 0.0) {
-            // guloso determinístico: maior ganho, desempate por id
             std::sort(cand.begin(), cand.end(),
                 [](auto& A, auto& B){
                     if (A.second != B.second) return A.second > B.second;
@@ -140,7 +182,7 @@ PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double a
             double corte = gmin + alpha * (gmax - gmin);
             vector<char> RCL;
             for (auto& p : cand) if (p.second >= (int)std::ceil(corte)) RCL.push_back(p.first);
-            if (RCL.empty()) { // fallback
+            if (RCL.empty()) {
                 std::sort(cand.begin(), cand.end(), [](auto&a, auto&b){return a.second>b.second;});
                 escolhido = cand.front().first;
             } else {
@@ -149,12 +191,14 @@ PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double a
             }
         }
 
-        // Inclui escolhido em D e atualiza dom
+        // ==============================
+        // PASSO 3 — INSERE ESCOLHIDO E ATUALIZA dom
+        // ==============================
         D.insert(escolhido);
-        for (char w : vizinhos(G,escolhido)) {
-            if (D.count(w)==0) dom[w] = 1; // passa a ser dominado por 1
+        dom.erase(escolhido);
+        for (char w : vizinhos(G, escolhido)) {
+            if (D.count(w) == 0) dom[w] = 1;
         }
-        // Observação: se algum w fora de D já tinha dom[w]==1, factível() teria bloqueado escolhido
     }
 
     // Converte para vetor ordenado
@@ -165,6 +209,7 @@ PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double a
 }
 
 PDSResultado DominacaoPerfeita::guloso(Grafo* G) {
+                            cout << "[DEBUG] Guloso PDS iniciado\n";
     std::mt19937 rng(123); // determinístico
     return construcao(G, rng, -1.0); // alpha<0 => guloso puro
 }

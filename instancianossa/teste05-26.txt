@@ -1,0 +1,55 @@
+0 0 0
+26
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+L
+M
+N
+O
+P
+Q
+R
+S
+T
+U
+V
+W
+X
+Y
+Z
+C A
+C B
+C D
+A B
+B D
+F E
+F G
+F H
+G H
+J I
+J K
+J L
+I K
+K L
+M N
+M O
+M P
+N O
+O P
+Q R
+Q S
+Q V
+R S
+T W
+T X
+T Y
+X Y
