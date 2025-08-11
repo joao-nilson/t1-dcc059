@@ -3,6 +3,11 @@
 #include <unordered_set>
 #include <limits>
 #include <numeric>
+#include <chrono>
+#include <fstream>
+#include <functional>
+#include "Grafo.h"
+
 
 using std::vector;
 using std::unordered_map;
@@ -273,4 +278,296 @@ PDSResultado DominacaoPerfeita::reativo(Grafo* G, int iteracoes,
         }
     }
     return best;
+}
+
+EvaluationResult evaluate_algorithm(
+    Grafo* G, 
+    std::function<PDSResultado(Grafo*)> algorithm, 
+    int trials = 10) 
+{
+    EvaluationResult res = {0, 0, 0};
+    int successes = 0;
+    int total_size = 0;
+    
+    for (int i = 0; i < trials; ++i) {
+        auto start = std::chrono::high_resolution_clock::now();
+        auto result = algorithm(G);
+        auto end = std::chrono::high_resolution_clock::now();
+        
+        std::chrono::duration<double> elapsed = end - start;
+        res.avg_time += elapsed.count();
+        
+        if (result.factivel) {
+            successes++;
+            total_size += result.custo();
+        }
+    }
+    
+    res.avg_time /= trials;
+    res.success_rate = (double)successes / trials;
+    res.avg_size = successes > 0 ? (double)total_size / successes : 0;
+    
+    return res;
+}
+
+void run_evaluations(const std::vector<Grafo*>& test_graphs) {
+    std::ofstream out("temp_exec.csv");
+    out << "Grafo,Vertices,Arestas,Algoritmo,Tempo,Tamanho,TaxaSucesso\n";
+    
+    for (Grafo* G : test_graphs) {
+        int n = G->get_lista_adj().size();
+        int m = 0;
+        for (No* no : G->get_lista_adj()) {
+            m += G->get_vizinhanca(no->get_id()).size();
+        }
+        if (G->get_direcionado()) m /= 2;
+        
+        // Testa guloso deterministico
+        auto res_greedy = evaluate_algorithm(G, [](Grafo* g) { 
+            return DominacaoPerfeita::guloso(g); 
+        });
+        out << "G" << n << "," << n << "," << m << ",Guloso,"
+            << res_greedy.avg_time << "," << res_greedy.avg_size << "," 
+            << res_greedy.success_rate << "\n";
+            
+        // Testa GRASP com alfas diferentes
+        for (double alpha : {0.0, 0.25, 0.5, 0.75, 1.0}) {
+            auto res_grasp = evaluate_algorithm(G, [alpha](Grafo* g) { 
+                return DominacaoPerfeita::grasp(g, 100, alpha); 
+            });
+            out << "G" << n << "," << n << "," << m << ",GRASP-alpha" << alpha << ","
+                << res_grasp.avg_time << "," << res_grasp.avg_size << "," 
+                << res_grasp.success_rate << "\n";
+        }
+        
+        // testa GRASP reativo
+        auto res_reativo = evaluate_algorithm(G, [](Grafo* g) { 
+            return DominacaoPerfeita::reativo(g, 100); 
+        });
+        out << "G" << n << "," << n << "," << m << ",Reativo,"
+            << res_reativo.avg_time << "," << res_reativo.avg_size << "," 
+            << res_reativo.success_rate << "\n";
+    }
+}
+
+void DominacaoPerfeita::write_runtime_csv(const RuntimeData& data, const std::string& filename) {
+    std::ofstream out(filename);
+    out << "TamanhoGrafo,TempoGuloso,TempoGRASP,TempoReactive\n";
+    
+    for (size_t i = 0; i < data.graph_sizes.size(); ++i) {
+        out << data.graph_sizes[i] << ","
+            << data.greedy_times[i] << ","
+            << data.grasp_times[i] << ","
+            << data.reactive_times[i] << "\n";
+    }
+}
+
+void write_iteration_csv(const IterationData& data, const std::string& filename) {
+    std::ofstream out(filename);
+    out << "Iterações,QualidadeGuloso,QualidadeGRASP,QualidadeReativo\n";
+    
+    for (size_t i = 0; i < data.iterations.size(); ++i) {
+        out << data.iterations[i] << ","
+            << data.greedy_qualities[i] << ","
+            << data.grasp_qualities[i] << ","
+            << data.reactive_qualities[i] << "\n";
+    }
+}
+
+void DominacaoPerfeita::write_alpha_csv(const AlphaPerformance& data, const std::string& filename) {
+    std::ofstream out(filename);
+    out << "Alpha,Quality,Time\n";
+    
+    for (size_t i = 0; i < data.alpha_values.size(); ++i) {
+        out << data.alpha_values[i] << ","
+            << data.solution_qualities[i] << ","
+            << data.runtimes[i] << "\n";
+    }
+}
+
+
+
+PDSResultado grasp_with_tracking(Grafo* G, int iteracoes, double alpha, 
+                                IterationTracker& tracker, 
+                                unsigned seed = std::random_device{}()) {
+    std::mt19937 rng(seed);
+    PDSResultado best; best.factivel = false;
+    
+    for (int it = 0; it < iteracoes; ++it) {
+        auto res = DominacaoPerfeita::construcao(G, rng, alpha);
+        if (res.factivel && (!best.factivel || res.custo() < best.custo())) {
+            best = res;
+        }
+        tracker.record(it + 1, best);
+    }
+    return best;
+}
+
+PDSResultado reativo_with_tracking(Grafo* G, int iteracoes,
+                                 const std::vector<double>& alphas, int bloco,
+                                 IterationTracker& tracker,
+                                 unsigned seed = std::random_device{}()) {
+    std::mt19937 rng(seed);
+    int k = (int)alphas.size();
+    std::vector<double> prob(k, 1.0/k);
+    std::vector<double> score(k, 0.0);
+    std::vector<int> cont(k, 0);
+
+    auto escolhe_idx = [&](){
+        std::discrete_distribution<int> dist(prob.begin(), prob.end());
+        return dist(rng);
+    };
+
+    PDSResultado best; 
+    best.factivel = false;
+
+    for (int it = 1; it <= iteracoes; ++it) {
+        int idx = escolhe_idx();
+        double alpha = alphas[idx];
+        auto res = DominacaoPerfeita::construcao(G, rng, alpha);
+        
+        if (res.factivel) {
+            double q = 1.0 / std::max(1, res.custo());
+            score[idx] += q;
+            cont[idx] += 1;
+            
+            if (!best.factivel || res.custo() < best.custo()) {
+                best = res;
+            }
+        }
+        
+        // guarda o melhor de cada iteracao
+        tracker.record(it, best);
+        
+        // atualiza probabilidades para cada iteracao de bloco
+        if (it % bloco == 0) {
+            std::vector<double> media(k, 0.0);
+            double soma = 0.0;
+            
+            for (int i = 0; i < k; i++) {
+                media[i] = (cont[i] ? score[i]/cont[i] : 0.0);
+                soma += media[i];
+            }
+            
+            if (soma > 0.0) {
+                for (int i = 0; i < k; i++) {
+                    prob[i] = media[i] / soma;
+                }
+            } else {
+                std::fill(prob.begin(), prob.end(), 1.0/k);
+            }
+            
+            // reseta valores
+            std::fill(score.begin(), score.end(), 0.0);
+            std::fill(cont.begin(), cont.end(), 0);
+        }
+    }
+    
+    return best;
+}
+
+void DominacaoPerfeita::run_quality_experiment(Grafo* G) {
+    const int max_iterations = 100;
+    const int step = 5; // A cada 5 iteracoes
+    const std::vector<double> alphas = {0.0, 0.25, 0.5, 0.75, 1.0};
+    const int block_size = 10;
+    
+    // reastreia cada algoritmo
+    IterationTracker greedy_track, grasp_track, reactive_track;
+    
+    // Testa guloso
+    auto greedy_res = DominacaoPerfeita::guloso(G);
+    greedy_track.record(1, greedy_res);
+    
+    // Testa GRASP
+    auto grasp_res = grasp_with_tracking(G, max_iterations, 0.5, grasp_track);
+    
+    // Test Reactive (would need similar tracking modification)
+    auto reactive_res = reativo_with_tracking(G, max_iterations, alphas, 
+                                          block_size, reactive_track);
+    
+    // Prepara dados para tabela
+    IterationData data;
+    for (int i = 0; i <= max_iterations; i += step) {
+        data.iterations.push_back(i);
+        
+        // pega qualidade mais proxima para cada alg
+        auto greedy_it = std::lower_bound(greedy_track.iterations.begin(), 
+                                         greedy_track.iterations.end(), i);
+        if (greedy_it != greedy_track.iterations.end()) {
+            size_t idx = greedy_it - greedy_track.iterations.begin();
+            data.greedy_qualities.push_back(greedy_track.qualities[idx]);
+        } else {
+            data.greedy_qualities.push_back(0); // ou greedy_track.qualities.back()
+        }
+        
+        auto grasp_it = std::lower_bound(grasp_track.iterations.begin(),
+                                       grasp_track.iterations.end(), i);
+        if (grasp_it != grasp_track.iterations.end()) {
+            size_t idx = grasp_it - grasp_track.iterations.begin();
+            data.grasp_qualities.push_back(grasp_track.qualities[idx]);
+        } else {
+            data.grasp_qualities.push_back(0);
+        }
+
+        auto reactive_it = std::lower_bound(reactive_track.iterations.begin(),
+                                         reactive_track.iterations.end(), i);
+        if (reactive_it != reactive_track.iterations.end()) {
+            size_t idx = reactive_it - reactive_track.iterations.begin();
+            data.reactive_qualities.push_back(reactive_track.qualities[idx]);
+        } else {
+            data.reactive_qualities.push_back(0);
+        }
+    }
+    
+    write_iteration_csv(data, "qualidade_vs_iteracoes.csv");
+}
+
+void run_reactive_experiment(Grafo* G) {
+    const int max_iterations = 100;
+    const std::vector<double> alphas = {0.0, 0.25, 0.5, 0.75, 1.0};
+    const int block_size = 10;
+    const int step = 5;
+    
+    IterationTracker reactive_track;
+
+    auto reactive_res = reativo_with_tracking(G, max_iterations, alphas, 
+                                           block_size, reactive_track);
+
+    IterationData data;
+
+    int last_iteration = std::min(max_iterations, 
+        reactive_track.iterations.empty() ? 0 : reactive_track.iterations.back());
+
+    
+    for (int i = 0; i <= max_iterations; i += step) {
+        data.iterations.push_back(i);
+        
+        auto it = std::lower_bound(reactive_track.iterations.begin(),
+                                 reactive_track.iterations.end(), i);
+        
+        if (it != reactive_track.iterations.end()) {
+            size_t idx = it - reactive_track.iterations.begin();
+            data.reactive_qualities.push_back(reactive_track.qualities[idx]);
+        } else if (!reactive_track.iterations.empty()) {
+            data.reactive_qualities.push_back(reactive_track.qualities.back());
+        } else {
+            // nenhum dado disponivel
+            data.reactive_qualities.push_back(0.0);
+        }
+    }
+    
+    std::ofstream alpha_log("probabilidades_alpha.csv");
+    alpha_log << "Iteracao,Alpha0,Alpha25,Alpha50,Alpha75,Alpha100\n";
+
+    write_iteration_csv(data, "qualidade_reativa.csv");
+
+    std::cout << "Resultado Experimento GRASP Reativo:\n";
+    std::cout << "--------------------------------\n";
+    std::cout << "Melhor tamanho de solução: " << reactive_res.custo() << "\n";
+    std::cout << "Solução válida: " << (reactive_res.factivel ? "SIM" : "NÃO") << "\n";
+    if (!reactive_track.qualities.empty()) {
+        std::cout << "Qualidade Final: " << reactive_track.qualities.back() << "\n";
+    }
+
 }

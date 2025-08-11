@@ -11,6 +11,46 @@ struct PDSResultado {
     int custo() const { return (int)D.size(); }
 };
 
+struct IterationTracker {
+    std::vector<int> iterations;
+    std::vector<double> qualities; // 1/set_size
+    
+    void record(int iter, const PDSResultado& result) {
+        iterations.push_back(iter);
+        if (result.factivel) {
+            qualities.push_back(1.0 / result.custo());
+        } else {
+            qualities.push_back(0); // ou marcador invalido
+        }
+    }
+};
+
+struct EvaluationResult {
+    double avg_time;
+    double avg_size;
+    double success_rate;
+};
+
+struct RuntimeData {
+    std::vector<int> graph_sizes;
+    std::vector<double> greedy_times;
+    std::vector<double> grasp_times;
+    std::vector<double> reactive_times;
+};
+
+struct IterationData {
+    std::vector<int> iterations;
+    std::vector<double> greedy_qualities;
+    std::vector<double> grasp_qualities;
+    std::vector<double> reactive_qualities;
+};
+
+struct AlphaPerformance {
+    std::vector<double> alpha_values;
+    std::vector<double> solution_qualities;
+    std::vector<double> runtimes;
+};
+
 class DominacaoPerfeita {
 public:
     // Verifica se D é um conjunto dominante perfeito (PDS)
@@ -31,10 +71,19 @@ public:
                                 int bloco = 10,
                                 unsigned seed = std::random_device{}());
 
-private:
+                                
+
     // Constrói uma solução PDS (ou falha) dado um gerador e modo de escolha
     // ‘alpha’ define o corte da RCL (min + alpha*(max-min)); se alpha<0 usa puro guloso
     static PDSResultado construcao(Grafo* G, std::mt19937& rng, double alpha);
+
+    private:
+    friend PDSResultado grasp_with_tracking(Grafo*, int, double, IterationTracker&, unsigned);
+    void run_quality_experiment(Grafo* G);
+    void write_iteration_csv(const IterationData& data, const std::string& filename);
+    void write_runtime_csv(const RuntimeData& data, const std::string& filename);
+    void write_alpha_csv(const AlphaPerformance& data, const std::string& filename);
+    
 
     // Utilidades
     static std::vector<char> vizinhos(Grafo* G, char u);
