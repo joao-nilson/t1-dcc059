@@ -8,26 +8,33 @@ namespace fs = std::filesystem;
 
 void DominacaoPerfeitaExperimentos::run_experiments(
     const std::vector<std::string>& filenames, 
+    const std::vector<std::string>& groups,
     const std::string& output_csv) {
+
+    if (filenames.size() != groups.size()) {
+        throw std::runtime_error("Número de arquivos e grupos não coincide");
+    }
     
     std::ofstream out(output_csv);
-    out << "Grafo,Vertices,Arestas,Densidade,Direcao,PesoAresta,PesoVertice,"
-        << "TamanhoGuloso,TamanhoGRASP,TamanhoReativo,TempoGuloso,TempoGRASP,TempoReativo\n";
+    out << "Grupo,Grafo,Vertices,Arestas,Densidade,Direcao,PesoAresta,PesoVertice,"
+    << "TamanhoGuloso,TamanhoGRASP,TamanhoReativo,TempoGuloso,TempoGRASP,TempoReativo\n";
     
-    for (const auto& filename : filenames) {
+    for (size_t i = 0; i < filenames.size(); i++) {
         Grafo* G = new Grafo();
-        G->carregaArquivo(filename);
+        G->carregaArquivo(filenames[i]);
         
-        ExperimentResult res = run_single_experiment(G, filename);
+        ExperimentResult res = run_single_experiment(G, filenames[i], groups[i]);
         write_result(out, res);
         
         delete G;
     }
 }
 
-ExperimentResult DominacaoPerfeitaExperimentos::run_single_experiment(Grafo* G, const std::string& filename) {
+ExperimentResult DominacaoPerfeitaExperimentos::run_single_experiment(
+    Grafo* G, const std::string& filename, const std::string& group) {
     
     ExperimentResult result;
+    result.group = group;
     parse_filename(filename, result);
     
     // pega propriedades basicas
@@ -99,7 +106,8 @@ void DominacaoPerfeitaExperimentos::parse_filename(
 }
 
 void DominacaoPerfeitaExperimentos::write_result(std::ofstream& out, const ExperimentResult& res) {
-    out << res.filename << ","
+    out << res.group << ","
+        << res.filename << ","
         << res.vertices << ","
         << res.edges << ","
         << res.density << ","

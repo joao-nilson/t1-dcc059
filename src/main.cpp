@@ -1,19 +1,20 @@
 #include <filesystem>
 #include <vector>
 #include <iostream>
+#include <map>
 #include "DominacaoPerfeitaExperimentos.h"
 
 namespace fs = std::filesystem;
 
 int main() {
-    std::vector<std::string> filenames;
+    std::map<std::string, std::vector<std::string>> grouped_files;
     
     // Diretórios com as instâncias
     const std::string t1_path = "instancias_t1";
     const std::string t2_path = "instancias_t2";
     
     // Função para adicionar arquivos de um diretório
-    auto add_files_from_dir = [&](const std::string& path) {
+    auto add_files_from_dir = [&](const std::string& path, const std::string& group) {
         if (!fs::exists(path)) {
             std::cerr << "Aviso: Diretório não encontrado - " << path << std::endl;
             return;
@@ -22,8 +23,9 @@ int main() {
         try {
             for (const auto& entry : fs::directory_iterator(path)) {
                 if (entry.path().extension() == ".txt") {
-                    filenames.push_back(entry.path().string());
-                    std::cout << "Adicionado: " << entry.path().filename().string() << std::endl;
+                    grouped_files[group].push_back(entry.path().string());
+                    std::cout << "Adicionado: " << entry.path().filename().string() 
+                              << " (Grupo: " << group << ")" << std::endl;
                 }
             }
         } catch (const fs::filesystem_error& e) {
@@ -33,10 +35,10 @@ int main() {
     
     // Coletar arquivos dos diretórios
     std::cout << "Coletando arquivos de instâncias..." << std::endl;
-    add_files_from_dir(t1_path);
-    add_files_from_dir(t2_path);
+    add_files_from_dir(t1_path, "t1");
+    add_files_from_dir(t2_path, "t2");
     
-    if (filenames.empty()) {
+    if (grouped_files.empty()) {
         std::cerr << "Erro: Nenhum arquivo de instância encontrado!" << std::endl;
         std::cerr << "Certifique-se que os diretórios existem e contêm arquivos .txt:" << std::endl;
         std::cerr << " - " << fs::absolute(t1_path) << std::endl;
@@ -44,11 +46,23 @@ int main() {
         return 1;
     }
     
+    // Preparar lista de arquivos mantendo a informação do grupo
+    std::vector<std::string> filenames;
+    std::vector<std::string> groups;
+    
+    for (const auto& [group, files] : grouped_files) {
+        for (const auto& file : files) {
+            filenames.push_back(file);
+            groups.push_back(group);
+        }
+    }
+    
     std::cout << "\nIniciando experimentos com " << filenames.size() << " arquivos..." << std::endl;
-    DominacaoPerfeitaExperimentos::run_experiments(filenames);
+    DominacaoPerfeitaExperimentos::run_experiments(filenames, groups);
     
     std::cout << "\nExperimentos concluídos com sucesso!" << std::endl;
     return 0;
+
 }
 
 // using namespace std;
