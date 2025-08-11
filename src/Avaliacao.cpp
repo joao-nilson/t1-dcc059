@@ -11,6 +11,13 @@ struct EvaluationResult {
     double success_rate;
 };
 
+struct RuntimeData {
+    std::vector<int> graph_sizes;
+    std::vector<double> greedy_times;
+    std::vector<double> grasp_times;
+    std::vector<double> reactive_times;
+};
+
 EvaluationResult evaluate_algorithm(
     Grafo* G, 
     std::function<PDSResultado(Grafo*)> algorithm, 
@@ -80,3 +87,16 @@ void run_evaluations(const std::vector<Grafo*>& test_graphs) {
             << res_reativo.success_rate << "\n";
     }
 }
+
+void write_runtime_csv(const RuntimeData& data, const std::string& filename) {
+    std::ofstream out(filename);
+    out << "TamanhoGrafo,TempoGuloso,TempoGRASP,TempoReactive\n";
+    
+    for (size_t i = 0; i < data.graph_sizes.size(); ++i) {
+        out << data.graph_sizes[i] << ","
+            << data.greedy_times[i] << ","
+            << data.grasp_times[i] << ","
+            << data.reactive_times[i] << "\n";
+    }
+}
+
