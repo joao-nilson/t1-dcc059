@@ -66,6 +66,13 @@ public:
     vector<Aresta*> get_vizinhanca(char id);
     vector<char> get_ids_vertices();
     No* getBuscaNo(char id);
+    int get_num_arestas() const {
+        int count = 0;
+        for (No* no : lista_adj) {
+            count += no->get_arestas().size();
+        }
+        return in_direcionado ? count : count / 2;
+    }
 
     //setters
     void set_ordem(int new_ordem){ordem = new_ordem;};
