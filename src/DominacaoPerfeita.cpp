@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <limits>
 #include <numeric>
+#include <cmath>
 
 using std::vector;
 using std::unordered_map;
@@ -54,154 +55,199 @@ bool DominacaoPerfeita::verificaPDS(Grafo* G, const vector<char>& Dvec) {
     for (auto& kv : dom) {
         if (kv.second != 1) return false;
     }
-    // vértices isolados fora de D falham; dentro de D pode
     return true;
 }
 
 // Construtora genérica (gulosa / GRASP): devolve solução ou falha
 PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double alpha) {
+    // --- ids ordenados, graus, estruturas base ---
     vector<char> ids = ordena_ids(G->get_ids_vertices());
     unordered_set<char> D;                 // solução parcial
     unordered_map<char,int> dom;           // dominadores para V\D
     unordered_map<char,int> deg = grau(G); // graus
 
-    // Inicializa dom para não-D (ainda vazio; vamos manter coerente a cada passo)
-    for (char v : ids) if (!deg.count(v)) deg[v]=0; // robustez
-
     auto esta_fora = [&](char v){ return D.count(v)==0; };
-    auto factivel = [&](char u)->bool {
-        // u só pode “tocar” vértices ainda não dominados
-        for (char w : vizinhos(G,u)) {
-            if (esta_fora(w)) {
-                // se já está dominado por 1, adicionar u criará conflito
-                // precisamos saber dom[w]; se ainda não inicializamos, considere 0
-                auto it = dom.find(w);
-                int val = (it==dom.end()? 0 : it->second);
-                if (val >= 1) return false;
-            }
-        }
-        return true;
-    };
 
+    // ganho(u): quantos vizinhos fora de D com dom==0 passarão a ser dominados
     auto ganho = [&](char u)->int {
         int g = 0;
         for (char w : vizinhos(G,u)) {
             if (esta_fora(w)) {
+                int val = 0;
                 auto it = dom.find(w);
-                int val = (it==dom.end()? 0 : it->second);
+                if (it != dom.end()) val = it->second;
                 if (val == 0) g++;
             }
         }
         return g;
     };
 
-    // Regra: vértices isolados só podem estar em D — adicione todos
-    for (char v : ids) {
-        if (deg[v]==0) D.insert(v);
-    }
+    // Inserção com reparo: aceita conflitos e promove em cascata vizinhos com dom==1
+    auto inserir_com_reparo = [&](char u) {
+        if (!esta_fora(u)) return;
 
-    // Recalcula dom após inserir isolados (não altera dom porque isolados não dominam ninguém)
-    for (char v : ids) if (D.count(v)==0) dom[v]=0;
+        // 1) Insere u em D
+        D.insert(u);
+        dom.erase(u);
+
+        // 2) Primeiro, marque vizinhos de u: se já tinham dom==1, entram na fila de promoção
+        std::vector<char> fila;
+        for (char w : vizinhos(G, u)) {
+            if (esta_fora(w)) {
+                int val = 0;
+                if (auto it = dom.find(w); it != dom.end()) val = it->second;
+                if (val == 1) fila.push_back(w); // conflito: teria 2 dominadores fora de D
+                dom[w] = 1; // manter como "1 dominador" (não somamos)
+            }
+        }
+
+        // 3) Processa promoções em cascata
+        while (!fila.empty()) {
+            char w = fila.back();
+            fila.pop_back();
+            if (!esta_fora(w)) continue;
+
+            // promove w
+            D.insert(w);
+            dom.erase(w);
+
+            // ao promover w, seus vizinhos fora de D ficam com dom=1;
+            // se algum vizinho z já estava com dom==1, ele também precisa ser promovido (entra na fila)
+            for (char z : vizinhos(G, w)) {
+                if (esta_fora(z)) {
+                    int valz = 0;
+                    if (auto itz = dom.find(z); itz != dom.end()) valz = itz->second;
+                    if (valz == 1) fila.push_back(z); // conflito em cascata
+                    dom[z] = 1;
+                }
+            }
+        }
+    };
+
+    // --- Regra de isolados: entram direto em D ---
+    for (char v : ids) {
+        if (!deg.count(v)) deg[v] = 0; // robustez
+        if (deg[v] == 0) {
+            inserir_com_reparo(v);
+        }
+    }
+    // Inicializa dom apenas para quem não está em D
+    for (char v : ids) if (esta_fora(v) && !dom.count(v)) dom[v] = 0;
 
     auto existe_fora_nao_dominado = [&](){
-        for (auto &kv : dom) if (kv.second==0){
-            cout << "[DEBUG] Ainda nao dominado: " << kv.first << "\n";
-        return true;
-        }
+        for (auto &kv : dom) if (kv.second == 0) return true;
         return false;
     };
 
-    // Laço principal
+    // =========================
+    // Laço principal de construção
+    // =========================
     while (existe_fora_nao_dominado()) {
 
-        // ==============================
-        // PASSO 0 — PROMOÇÃO (ANTI-DEADLOCK)
-        // Se existe algum vértice w fora de D com dom[w] == 1 e ele é factível,
-        // promovemos w imediatamente para D. Isso quebra bloqueios do tipo C–(M)–(F,J).
-        // ==============================
+        // ===== PASSO 0 — PROMOÇÃO (anti-deadlock “normal”) =====
+        // Se existe w fora de D com dom[w]==1 e ganho(w)>0, promove
         {
-            
             char w_prom = 0;
-            bool achou = false;
-            for (char w : ids) if (D.count(w) == 0) {
+            for (char w : ids) if (esta_fora(w)) {
                 int domw = 0;
                 auto it = dom.find(w);
                 if (it != dom.end()) domw = it->second;
-
-                if (domw == 1 && factivel(w) && ganho(w) > 0) {
+                if (domw == 1 && ganho(w) > 0) {
                     w_prom = w;
-                    achou = true;
                     break;
                 }
             }
+            if (w_prom != 0) {
+                inserir_com_reparo(w_prom);
+                continue; // volta ao topo do while
+            }
+        }
 
-            if (achou) {
-                // Inclui promovido e atualiza dom
-                                         cout << "[DEBUG] Promovido: " << w_prom 
-                                          << " (ganho=" << ganho(w_prom) << ")\n";
-                D.insert(w_prom);
-                dom.erase(w_prom);
-                for (char z : vizinhos(G, w_prom)) {
-                    if (D.count(z) == 0) dom[z] = 1; // passa a ser dominado por 1
+        // ===== PASSO 1 — CANDIDATOS (ganho>0) =====
+        vector<pair<char,int>> cand;
+        for (char u : ids) if (esta_fora(u)) {
+            int g = ganho(u);
+            if (g > 0) cand.push_back({u, g});
+        }
+
+        // ===== PASSO 2 — ESCOLHA (guloso puro ou RCL) =====
+        if (!cand.empty()) {
+            char escolhido;
+            if (alpha < 0.0) {
+                // Guloso puro: maior ganho; desempate por id
+                std::sort(cand.begin(), cand.end(),
+                    [](auto& A, auto& B){
+                        if (A.second != B.second) return A.second > B.second;
+                        return A.first < B.first;
+                    });
+                escolhido = cand.front().first;
+            } else {
+                // GRASP: RCL por alpha
+                int gmin = std::numeric_limits<int>::max();
+                int gmax = std::numeric_limits<int>::min();
+                for (auto& p : cand) { gmin = std::min(gmin,p.second); gmax = std::max(gmax,p.second); }
+                double corte = gmin + alpha * (gmax - gmin);
+                vector<char> RCL;
+                for (auto& p : cand) if (p.second >= (int)std::ceil(corte)) RCL.push_back(p.first);
+                if (RCL.empty()) {
+                    std::sort(cand.begin(), cand.end(), [](auto&a, auto&b){return a.second>b.second;});
+                    escolhido = cand.front().first;
+                } else {
+                    std::uniform_int_distribution<int> uni(0, (int)RCL.size()-1);
+                    escolhido = RCL[uni(rng)];
                 }
-                // volta ao topo do while para reavaliar; isso evita montar cand/RCL à toa
+            }
+
+            // PASSO 3 — insere escolhido COM REPARO
+            inserir_com_reparo(escolhido);
+            continue; // próximo ciclo
+        }
+
+        // ===== Fallback A — cand vazio, mas ainda há vértice não dominado =====
+        {
+            char alvo = 0;
+            for (auto &kv : dom) {
+                if (kv.second == 0) { alvo = kv.first; break; }
+            }
+            if (alvo != 0) {
+                // Escolhe um vizinho de 'alvo' (pode ter ganho 0); reparo garante perfeição
+                char melhor = 0;
+                int melhorGanho = -1;
+                for (Aresta* a : G->get_vizinhanca(alvo)) {
+                    char u = a->id_no_alvo;
+                    if (!esta_fora(u)) continue; // já em D
+                    int g = ganho(u);             // pode ser 0
+                    if (g > melhorGanho) { melhor = u; melhorGanho = g; }
+                }
+                if (melhor != 0) {
+                    inserir_com_reparo(melhor);
+                    continue; // volta ao topo
+                }
+                // Se não achou vizinho para cobrir 'alvo', cai no Fallback B
+            }
+        }
+
+        // ===== Fallback B — promover alguém com dom==1 mesmo com ganho==0 =====
+        {
+            char w_prom = 0;
+            for (char w : ids) if (esta_fora(w)) {
+                int domw = 0; auto it = dom.find(w);
+                if (it != dom.end()) domw = it->second;
+                if (domw == 1) { // sem exigir ganho>0 aqui; reparo cuida dos conflitos
+                    w_prom = w; break;
+                }
+            }
+            if (w_prom != 0) {
+                inserir_com_reparo(w_prom);
                 continue;
             }
         }
 
-        // ==============================
-        // PASSO 1 — CANDIDATOS VIÁVEIS (como antes)
-        // ==============================
-        vector<pair<char,int>> cand;
-        for (char u : ids) if (D.count(u) == 0) {
-            if (factivel(u)) {
-                int g = ganho(u);
-                if (g > 0) cand.push_back({u, g});
-            }
-        }
-        if (cand.empty()) {
-            // Não há como dominar quem falta sem criar conflito
-            return PDSResultado{ {}, false };
-        }
-
-        // ==============================
-        // PASSO 2 — ESCOLHA (guloso puro ou RCL se alpha >= 0)
-        // ==============================
-        char escolhido;
-        if (alpha < 0.0) {
-            std::sort(cand.begin(), cand.end(),
-                [](auto& A, auto& B){
-                    if (A.second != B.second) return A.second > B.second;
-                    return A.first < B.first;
-                });
-            escolhido = cand.front().first;
-        } else {
-            int gmin = std::numeric_limits<int>::max();
-            int gmax = std::numeric_limits<int>::min();
-            for (auto& p : cand) { gmin = std::min(gmin,p.second); gmax = std::max(gmax,p.second); }
-            double corte = gmin + alpha * (gmax - gmin);
-            vector<char> RCL;
-            for (auto& p : cand) if (p.second >= (int)std::ceil(corte)) RCL.push_back(p.first);
-            if (RCL.empty()) {
-                std::sort(cand.begin(), cand.end(), [](auto&a, auto&b){return a.second>b.second;});
-                escolhido = cand.front().first;
-            } else {
-                std::uniform_int_distribution<int> uni(0, (int)RCL.size()-1);
-                escolhido = RCL[uni(rng)];
-            }
-        }
-
-        // ==============================
-        // PASSO 3 — INSERE ESCOLHIDO E ATUALIZA dom
-        // ==============================
-        D.insert(escolhido);
-        dom.erase(escolhido);
-        for (char w : vizinhos(G, escolhido)) {
-            if (D.count(w) == 0) dom[w] = 1;
-        }
+        // Se chegou aqui, realmente não há como avançar (muito improvável com reparo)
+        return PDSResultado{ {}, false };
     }
 
-    // Converte para vetor ordenado
+    // ---------- Reconstrói vetor e valida ----------
     vector<char> Dout(D.begin(), D.end());
     std::sort(Dout.begin(), Dout.end());
     bool ok = verificaPDS(G, Dout);
@@ -209,7 +255,6 @@ PDSResultado DominacaoPerfeita::construcao(Grafo* G, std::mt19937& rng, double a
 }
 
 PDSResultado DominacaoPerfeita::guloso(Grafo* G) {
-                            cout << "[DEBUG] Guloso PDS iniciado\n";
     std::mt19937 rng(123); // determinístico
     return construcao(G, rng, -1.0); // alpha<0 => guloso puro
 }
